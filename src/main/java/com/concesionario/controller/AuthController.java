@@ -3,8 +3,7 @@ package com.concesionario.controller;
 import com.concesionario.model.Usuario;
 import com.concesionario.model.Administrador;
 import com.concesionario.model.Rol;
-
-import com.concesionario.service.UsuarioService;
+import com.concesionario.service.interfaces.IUsuarioService;
 import com.concesionario.service.AdministradorService;
 import com.concesionario.service.ValidacionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,20 +26,19 @@ public class AuthController {
     @Autowired
     private ValidacionService validacionService;
 
-    private final UsuarioService usuarioService;
+    private final IUsuarioService usuarioService;
     private final AdministradorService administradorService;
 
-    public AuthController(UsuarioService usuarioService, AdministradorService administradorService, ValidacionService validacionService) {
+    public AuthController(IUsuarioService usuarioService, AdministradorService administradorService,
+            ValidacionService validacionService) {
         this.usuarioService = usuarioService;
         this.administradorService = administradorService;
         this.validacionService = validacionService;
     }
 
-
-
     @GetMapping("/login")
     public String showLogin(@RequestParam(required = false) boolean error,
-                            Model model) {
+            Model model) {
         if (error) {
             model.addAttribute("error", "Usuario o contraseña incorrectos");
         }
@@ -62,7 +60,6 @@ public class AuthController {
             @RequestParam String password,
             Model model) {
 
-
         Optional<String> errorValidacion = validacionService.validarCorreoEIdentificacion(email, identificacion);
         if (errorValidacion.isPresent()) {
             model.addAttribute("error", errorValidacion.get());
@@ -80,8 +77,7 @@ public class AuthController {
                     email,
                     identificacion,
                     password,
-                    Rol.USUARIO
-            );
+                    Rol.USUARIO);
             return "redirect:/login?success=Registro+exitoso";
 
         } catch (Exception e) {
@@ -108,7 +104,6 @@ public class AuthController {
             @RequestParam String password,
             Model model) {
 
-
         Optional<String> errorValidacion = validacionService.validarCorreoEIdentificacion(email, identificacion);
         if (errorValidacion.isPresent()) {
             model.addAttribute("error", errorValidacion.get());
@@ -125,8 +120,7 @@ public class AuthController {
                     apellido,
                     identificacion,
                     email,
-                    password
-            );
+                    password);
             return "redirect:/login?adminRegistrado=true";
 
         } catch (Exception e) {

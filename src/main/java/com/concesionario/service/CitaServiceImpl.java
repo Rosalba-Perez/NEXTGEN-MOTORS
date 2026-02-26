@@ -1,78 +1,72 @@
 package com.concesionario.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.concesionario.dto.UsuarioDTO;
 import com.concesionario.dto.VehiculoDTO;
 import com.concesionario.model.Cita;
 import com.concesionario.model.Usuario;
 import com.concesionario.model.Vehiculo;
 import com.concesionario.repository.CitaRepository;
+import com.concesionario.service.interfaces.ICitaService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-// import org.springframework.data.domain.Page;
-// import org.springframework.data.domain.PageRequest;
-// import org.springframework.data.domain.Pageable;
-// import org.springframework.data.domain.Sort;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
-public class CitaService {
+public class CitaServiceImpl implements ICitaService {
+
+    private final CitaRepository citaRepository;
 
     @Autowired
-    private CitaRepository citaRepository;
+    public CitaServiceImpl(CitaRepository citaRepository) {
+        this.citaRepository = citaRepository;
+    }
 
+    @Override
     public Cita guardarCita(Cita cita) {
         return citaRepository.save(cita);
     }
 
+    @Override
     public List<Cita> obtenerTodasLasCitas() {
         return citaRepository.findAllByOrderByIdDesc();
     }
 
+    @Override
     public List<Cita> obtenerCitasPorTipo(String tipo) {
         return citaRepository.findByTipo(tipo);
     }
 
-
+    @Override
     public List<Cita> obtenerCitasPendientes() {
         return citaRepository.findByAtendidaFalseOrderByIdDesc();
     }
 
-
+    @Override
     public List<Cita> obtenerCitasPorUsuarioId(String usuarioId) {
         return citaRepository.findByUsuarioIdOrderByFechaCreacionDesc(usuarioId);
     }
 
+    @Override
     public Cita obtenerCitaPorId(String id) {
         return citaRepository.findById(id).orElse(null);
     }
 
-    // public Page<Cita> obtenerCitasPaginadas(int page, int size){
-    //     Pageable pageable = PageRequest.of(page, size, Sort.by("fechaCreacion").descending());
-    //     return citaRepository.findAllByOrderByFechaCreacionDesc(pageable);
-    // }
-
+    @Override
     public void guardarCitaSimple(Cita cita, Usuario usuario, Vehiculo vehiculo) {
         prepararCitaEmbedding(cita, usuario, vehiculo);
-        // Lógica específica si la hubiera, en este caso es idéntica
         citaRepository.save(cita);
     }
 
+    @Override
     public void crearCitaConEmbedding(Cita cita, Usuario usuario, Vehiculo vehiculo) {
         prepararCitaEmbedding(cita, usuario, vehiculo);
-        // Lógica específica si la hubiera
         citaRepository.save(cita);
     }
 
     private void prepararCitaEmbedding(Cita cita, Usuario usuario, Vehiculo vehiculo) {
-        cita.setCedula(usuario.getIdentificacionUser());
-        cita.setCorreoElectronico(usuario.getCorreoUser());
-
-        // Crear DTOs para embedding
         UsuarioDTO usuarioDTO = new UsuarioDTO();
         usuarioDTO.setId(usuario.getId());
         usuarioDTO.setNombre(usuario.getNombreUser());
@@ -87,40 +81,30 @@ public class CitaService {
             vehiculoDTO.setModelo(vehiculo.getModelo());
             vehiculoDTO.setPrecio(vehiculo.getPrecio());
             vehiculoDTO.setCategoria(vehiculo.getCategoria());
-            // vehiculoDTO.setColores(vehiculo.getColores());
         }
 
-        // Establece relaciones embebidas
         cita.setUsuario(usuarioDTO);
         cita.setVehiculo(vehiculoDTO);
         cita.setFechaCreacion(LocalDateTime.now());
         cita.setAtendida(false);
         cita.setLeida(false);
         cita.setEstado("Pendiente");
-
-        cita.setNombres(null);
-        cita.setApellidos(null);
-        cita.setCedula(null);
-        cita.setCorreoElectronico(null);
-        cita.setComentario(null); // Unificado
-        // cita.setTelefono(null);
-        cita.setModelo(null);
-        cita.setVehiculoId(null);
-        cita.setNombreVehiculo(null);
     }
 
-
+    @Override
     public long contarTodasLasCitas() {
         return citaRepository.count();
     }
+
+    @Override
     public boolean isHoraDisponible(String trabajadorId, String fechaCita, String horaCita) {
         return citaRepository.findByTrabajadorIdAndFechaCitaAndHoraCita(trabajadorId, fechaCita, horaCita).isEmpty();
     }
 
+    @Override
     public List<String> getHorasOcupadas(String trabajadorId, String fechaCita) {
-        List<Cita> citas = citaRepository.findByTrabajadorIdAndFechaCita(trabajadorId, fechaCita);
-        return citas.stream().map(Cita::getHoraCita).collect(Collectors.toList());
+        return citaRepository.findByTrabajadorIdAndFechaCita(trabajadorId, fechaCita).stream()
+                .map(Cita::getHoraCita)
+                .collect(Collectors.toList());
     }
-    
-
 }

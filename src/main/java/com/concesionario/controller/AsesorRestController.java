@@ -6,6 +6,7 @@ import com.concesionario.model.Trabajador;
 import com.concesionario.model.Vehiculo;
 import com.concesionario.repository.CitaRepository;
 import com.concesionario.service.*;
+import com.concesionario.service.interfaces.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,13 +27,13 @@ public class AsesorRestController {
     private CitaRepository citaRepository;
 
     @Autowired
-    private ProspectoService prospectoService;
+    private IProspectoService prospectoService;
 
     @Autowired
-    private VehiculoService vehiculoService;
+    private IVehiculoService vehiculoService;
 
     @Autowired
-    private EmailService emailService;
+    private IEmailService emailService;
 
     @Autowired
     private NotificationService notificationService;
@@ -58,11 +59,10 @@ public class AsesorRestController {
             Principal principal) {
         try {
             Trabajador asesor = trabajadorDetailsService.findByCorreo(principal.getName());
-            
+
             prospectoService.registrarProspectoManual(
-                nombre, apellido, correo, telefono, vehiculoInteres, asesor.getId(), observaciones
-            );
-            
+                    nombre, apellido, correo, telefono, vehiculoInteres, asesor.getId(), observaciones);
+
             return ResponseEntity.ok(Map.of("success", true, "message", "Prospecto registrado exitosamente"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Error: " + e.getMessage()));
@@ -80,7 +80,8 @@ public class AsesorRestController {
     }
 
     @PostMapping("/prospectos/cambiar-estado")
-    public ResponseEntity<?> cambiarEstadoProspecto(@RequestParam String prospectoId, @RequestParam String nuevoEstado) {
+    public ResponseEntity<?> cambiarEstadoProspecto(@RequestParam String prospectoId,
+            @RequestParam String nuevoEstado) {
         try {
             prospectoService.actualizarEstadoProspecto(prospectoId, nuevoEstado);
             return ResponseEntity.ok(Map.of("success", true, "message", "Estado actualizado"));
@@ -103,12 +104,13 @@ public class AsesorRestController {
                     .filter(p -> !"Nuevo".equalsIgnoreCase(p.getEstado()))
                     .count();
 
-            // 2. Ventas este Mes: Estado "Venta Exitosa" y fecha ultimo contacto en mes actual
+            // 2. Ventas este Mes: Estado "Venta Exitosa" y fecha ultimo contacto en mes
+            // actual
             long ventasMes = prospectos.stream()
-                    .filter(p -> "Venta Exitosa".equalsIgnoreCase(p.getEstado()) && 
-                                 p.getUltimoContacto() != null &&
-                                 p.getUltimoContacto().getMonth() == ahora.getMonth() &&
-                                 p.getUltimoContacto().getYear() == ahora.getYear())
+                    .filter(p -> "Venta Exitosa".equalsIgnoreCase(p.getEstado()) &&
+                            p.getUltimoContacto() != null &&
+                            p.getUltimoContacto().getMonth() == ahora.getMonth() &&
+                            p.getUltimoContacto().getYear() == ahora.getYear())
                     .count();
 
             // 3. Tasa de Conversión: (Ventas Exitosas / Prospectos Atendidos) * 100
@@ -123,9 +125,9 @@ public class AsesorRestController {
             // Crear respuesta
             java.util.Map<String, Object> response = new java.util.HashMap<>();
             response.put("nombre", asesor.getNombre());
-            
+
             // "totalProspectos" se usará para mostrar "Prospectos Activos" en el frontend
-            response.put("totalProspectos", prospectosActivos); 
+            response.put("totalProspectos", prospectosActivos);
             response.put("ventasMes", ventasMes);
             response.put("tasaConversion", Math.round(tasaConversion * 10.0) / 10.0); // Redondear a 1 decimal
             response.put("comisiones", comisiones);
@@ -149,7 +151,8 @@ public class AsesorRestController {
                 // Nombre del cliente
                 String nombreCompleto = "";
                 if (cita.getUsuario() != null) {
-                    nombreCompleto = (cita.getUsuario().getNombre() != null ? cita.getUsuario().getNombre() : "") + " " +
+                    nombreCompleto = (cita.getUsuario().getNombre() != null ? cita.getUsuario().getNombre() : "") + " "
+                            +
                             (cita.getUsuario().getApellido() != null ? cita.getUsuario().getApellido() : "");
                 }
                 citaMap.put("id", cita.getId());
@@ -202,25 +205,28 @@ public class AsesorRestController {
                 String titulo = "";
                 String mensaje = "";
 
-                switch(estado) {
+                switch (estado) {
                     case "Aprobada":
                         titulo = "¡Cita Confirmada! 🚗✅";
-                        mensaje = "Buenas noticias. Tu cita en NextGen Motors para ver el " + nombreVehiculo + " ha sido aprobada. ¡Te esperamos!";
+                        mensaje = "Buenas noticias. Tu cita en NextGen Motors para ver el " + nombreVehiculo
+                                + " ha sido aprobada. ¡Te esperamos!";
                         break;
                     case "Rechazada":
                         titulo = "Actualización de Cita 📅";
-                        mensaje = "Lo sentimos, tu solicitud para el " + nombreVehiculo + " no pudo ser procesada en este horario. Por favor revisa los detalles.";
+                        mensaje = "Lo sentimos, tu solicitud para el " + nombreVehiculo
+                                + " no pudo ser procesada en este horario. Por favor revisa los detalles.";
                         break;
                     case "Completada":
                         titulo = "¡Gracias por visitarnos! 🤝";
-                        mensaje = "Fue un placer atenderte. Esperamos que hayas disfrutado tu experiencia con el " + nombreVehiculo + ".";
+                        mensaje = "Fue un placer atenderte. Esperamos que hayas disfrutado tu experiencia con el "
+                                + nombreVehiculo + ".";
                         break;
                     default:
                         titulo = "Estado de Cita Actualizado 🔄";
                         mensaje = "Tu cita para el " + nombreVehiculo + " ahora está: " + estado + ".";
                 }
 
-               notificationService.enviarNotificacion(cita.getUsuario().getId(), titulo, mensaje);
+                notificationService.enviarNotificacion(cita.getUsuario().getId(), titulo, mensaje);
             }
 
             return ResponseEntity.ok("OK");
@@ -231,8 +237,8 @@ public class AsesorRestController {
 
     @PostMapping("/citas/{id}/asignar-fecha")
     public ResponseEntity<?> asignarFechaCita(@PathVariable String id,
-                                              @RequestParam String fecha,
-                                              @RequestParam String hora) {
+            @RequestParam String fecha,
+            @RequestParam String hora) {
         try {
             Cita cita = citaRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Cita no encontrada"));
@@ -249,11 +255,11 @@ public class AsesorRestController {
                     nombreVehiculo = cita.getVehiculo().getMarca() + " " + cita.getVehiculo().getModelo();
                 }
 
-               notificationService.enviarNotificacion(
-                   cita.getUsuario().getId(), 
-                   "¡Fecha Asignada! 🗓️📍", 
-                   "Hemos programado tu cita para ver el " + nombreVehiculo + " el día " + fecha + " a las " + hora + ". ¡Nos vemos pronto!"
-               );
+                notificationService.enviarNotificacion(
+                        cita.getUsuario().getId(),
+                        "¡Fecha Asignada! 🗓️📍",
+                        "Hemos programado tu cita para ver el " + nombreVehiculo + " el día " + fecha + " a las " + hora
+                                + ". ¡Nos vemos pronto!");
             }
 
             return ResponseEntity.ok("OK");
@@ -272,11 +278,11 @@ public class AsesorRestController {
 
             // 🔔 NOTIFICACIÓN PUSH PERSONALIZADA
             if (cita.getUsuario() != null) {
-               notificationService.enviarNotificacion(
-                   cita.getUsuario().getId(), 
-                   "Nuevo Mensaje del Asesor 💬", 
-                   "Tienes un nuevo comentario sobre tu cita: \"" + (notas.length() > 50 ? notas.substring(0, 47) + "..." : notas) + "\""
-               );
+                notificationService.enviarNotificacion(
+                        cita.getUsuario().getId(),
+                        "Nuevo Mensaje del Asesor 💬",
+                        "Tienes un nuevo comentario sobre tu cita: \""
+                                + (notas.length() > 50 ? notas.substring(0, 47) + "..." : notas) + "\"");
             }
 
             return ResponseEntity.ok("OK");
@@ -297,12 +303,13 @@ public class AsesorRestController {
             citaMap.put("fechaSolicitud", cita.getFechaCreacion());
             citaMap.put("estado", cita.getEstado());
             citaMap.put("notasAdmin", cita.getNotasAdmin());
-            
+
             // Cliente info
             if (cita.getUsuario() != null) {
                 citaMap.put("cliente", cita.getUsuario().getNombre() + " " + cita.getUsuario().getApellido());
             } else {
-                citaMap.put("cliente", (cita.getNombres() != null ? cita.getNombres() : "") + " " + (cita.getApellidos() != null ? cita.getApellidos() : ""));
+                citaMap.put("cliente", (cita.getNombres() != null ? cita.getNombres() : "") + " "
+                        + (cita.getApellidos() != null ? cita.getApellidos() : ""));
             }
 
             return ResponseEntity.ok(citaMap);
@@ -386,15 +393,13 @@ public class AsesorRestController {
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "message", "Promoción enviada exitosamente a todos los clientes"
-            ));
+                    "message", "Promoción enviada exitosamente a todos los clientes"));
 
         } catch (Exception e) {
             System.err.println("❌ Error en envío masivo: " + e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
-                    "message", "Error al enviar la promoción: " + e.getMessage()
-            ));
+                    "message", "Error al enviar la promoción: " + e.getMessage()));
         }
     }
 }

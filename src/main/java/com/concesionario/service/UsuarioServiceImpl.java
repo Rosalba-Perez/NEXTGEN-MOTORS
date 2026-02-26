@@ -3,6 +3,8 @@ package com.concesionario.service;
 import com.concesionario.model.Rol;
 import com.concesionario.model.Usuario;
 import com.concesionario.repository.UsuarioRepository;
+import com.concesionario.service.interfaces.IEmailService;
+import com.concesionario.service.interfaces.IUsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,25 +14,25 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class UsuarioService {
+public class UsuarioServiceImpl implements IUsuarioService {
+
+    private final IEmailService emailService;
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    private EmailService EmailService;
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+    public UsuarioServiceImpl(UsuarioRepository usuarioRepository,
+            PasswordEncoder passwordEncoder,
+            IEmailService emailService) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
-    // MÉTODOS EXISTENTES
+    @Override
     public void registrarUsuario(String nombre, String apellido,
-                                 String email, String identificacion,
-                                 String password, Rol rol) {
+            String email, String identificacion,
+            String password, Rol rol) {
 
         String passwordEncriptado = passwordEncoder.encode(password);
 
@@ -43,42 +45,48 @@ public class UsuarioService {
         usuario.setFechaCreacion(LocalDateTime.now());
         usuario.setRol(rol);
 
-        EmailService.enviarCorreoBienvenida(email, nombre, apellido);
+        emailService.enviarCorreoBienvenida(email, nombre, apellido);
 
         usuarioRepository.save(usuario);
     }
 
+    @Override
     public long contarUsuarios() {
         return usuarioRepository.count();
     }
 
+    @Override
     public boolean existeCorreoEnCualquierTabla(String correo) {
         return usuarioRepository.existsByCorreoUser(correo);
     }
 
+    @Override
     public boolean existeIdentificacionEnCualquierTabla(String identificacion) {
         return usuarioRepository.existsByIdentificacionUser(identificacion);
     }
 
+    @Override
     public Usuario findByCorreoUser(String correo) {
         return usuarioRepository.findByCorreoUser(correo)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con el correo: " + correo));
     }
 
-    // NUEVOS MÉTODOS NECESARIOS PARA PREDICCIÓN
+    @Override
     public List<Usuario> findAll() {
         return usuarioRepository.findAll();
     }
 
+    @Override
     public Usuario findById(String id) {
-        Optional<Usuario> usuario = usuarioRepository.findById(id);
-        return usuario.orElse(null);
+        return usuarioRepository.findById(id).orElse(null);
     }
 
+    @Override
     public Usuario save(Usuario usuario) {
         return usuarioRepository.save(usuario);
     }
 
+    @Override
     public Optional<Usuario> findByResetPasswordToken(String token) {
         return usuarioRepository.findByResetPasswordToken(token);
     }
