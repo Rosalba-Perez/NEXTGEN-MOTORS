@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trabajador - NexGen Motors</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            --primary: #0f66bd;
+            --primary-light: #4895ef;
+            --secondary: #3f37c9;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1f2937;
+            --light: #f8fafc;
+            --border-radius: 0.75rem;
+            --box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Manrope', sans-serif; }
+        
+        body { background-color: #f8fafc; color: #1f2937; }
+        .dark body { background-color: #101922; color: #e5e7eb; }
+
+        .sidebar {
+            width: 280px; min-height: 100vh;
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            position: fixed; left: 0; top: 0; z-index: 1000;
+        }
+
+        .main-content { margin-left: 280px; min-height: 100vh; padding: 2rem; }
+
+        .sidebar-link {
+            display: flex; items-center: center; gap: 0.75rem;
+            padding: 1rem 1.5rem; color: #9ca3af; transition: all 0.3s;
+        }
+
+        .sidebar-link:hover, .sidebar-link.active {
+            background: rgba(15, 102, 189, 0.1); color: white;
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-card {
+            background: white; border-radius: var(--border-radius); padding: 1.5rem;
+            box-shadow: var(--box-shadow); border: 1px solid #e5e7eb;
+        }
+        .dark .stat-card { background: #1f2937; border-color: #374151; }
+
+        .table-container {
+            background: white; border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow); overflow: hidden; margin-top: 2rem;
+        }
+        .dark .table-container { background: #1f2937; }
+
+        .estado-badge {
+            padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;
+        }
+        .estado-pendiente { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+        .estado-aprobada { background: rgba(16, 185, 129, 0.1); color: #059669; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div class="sidebar">
+        <div class="p-6 border-b border-gray-700 mb-4">
+            <h2 class="text-white font-bold text-xl">NexGen Motors</h2>
+            <p class="text-gray-400 text-sm">Panel de Trabajador</p>
+        </div>
+        <nav>
+            <a href="#dashboard" class="sidebar-link active">
+                <i class='bx bxs-dashboard text-xl'></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#citas" class="sidebar-link">
+                <i class='bx bxs-calendar text-xl'></i>
+                <span>Citas</span>
+            </a>
+            <a href="#vehiculos" class="sidebar-link">
+                <i class='bx bxs-car text-xl'></i>
+                <span>Vehículos</span>
+            </a>
+            <div class="mt-8 pt-4 border-t border-gray-700">
+                <a href="/logout" class="sidebar-link text-red-400 hover:text-red-300">
+                    <i class='bx bxs-log-out text-xl'></i>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <main class="main-content">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold dark:text-white">Bienvenido, <span sec:authentication="name">Trabajador</span></h1>
+            <div class="flex items-center gap-4">
+                <button class="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                    <i class='bx bxs-bell text-xl text-gray-600 dark:text-gray-300'></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="stat-card">
+                <div class="flex items-center gap-4">
+                    <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
+                        <i class='bx bxs-calendar-check text-2xl text-blue-600'></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Citas Pendientes</p>
+                        <h3 class="text-2xl font-bold" th:text="${#lists.size(citas)}">0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Citas Table -->
+        <div id="citas" class="table-container">
+            <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                <h3 class="font-bold text-lg">Citas de Hoy</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 dark:bg-gray-800 text-gray-500 uppercase text-xs font-semibold">
+                        <tr>
+                            <th class="px-6 py-4">Cliente</th>
+                            <th class="px-6 py-4">Tipo</th>
+                            <th class="px-6 py-4">Vehículo</th>
+                            <th class="px-6 py-4">Estado</th>
+                            <th class="px-6 py-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        <tr th:each="cita : ${citas}" class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <td class="px-6 py-4 font-medium" th:text="${cita.usuario != null ? cita.usuario.nombre + ' ' + cita.usuario.apellido : 'N/A'}"></td>
+                            <td class="px-6 py-4 text-sm" th:text="${cita.tipo}"></td>
+                            <td class="px-6 py-4 text-sm" th:text="${cita.vehiculo != null ? cita.vehiculo.marca + ' ' + cita.vehiculo.modelo : cita.modelo}"></td>
+                            <td class="px-6 py-4">
+                                <span th:text="${cita.estado}" class="estado-badge"
+                                      th:classappend="${cita.estado == 'Pendiente' ? 'estado-pendiente' : 'estado-aprobada'}"></span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <button class="text-primary hover:underline font-medium text-sm">Ver Detalles</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Vehículos Stock -->
+        <div id="vehiculos" class="table-container mt-12">
+            <div class="p-6 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="font-bold text-lg">Vehículos en Stock</h3>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div th:each="vehiculo : ${vehiculos}" class="bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700">
+                    <img th:src="${vehiculo.imagenUrl}" class="w-full h-48 object-cover">
+                    <div class="p-4">
+                        <h4 class="font-bold" th:text="${vehiculo.marca + ' ' + vehiculo.modelo}"></h4>
+                        <p class="text-gray-500 text-sm" th:text="${vehiculo.categoria}"></p>
+                        <div class="mt-4 flex justify-between items-center">
+                            <span class="text-primary font-bold" th:text="${'$' + vehiculo.precio}"></span>
+                            <span class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded" th:text="${vehiculo.año}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

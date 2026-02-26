@@ -1,7 +1,6 @@
 package com.concesionario.controller;
 
 import com.concesionario.model.Vehiculo;
-import com.concesionario.service.VehiculoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +15,12 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "*") // Permitir acceso desde cualquier lugar (necesario para n8n/ngrok)
 public class N8nRestController {
 
+    private final com.concesionario.service.interfaces.IVehiculoService vehiculoService;
+
     @Autowired
-    private VehiculoService vehiculoService;
+    public N8nRestController(com.concesionario.service.interfaces.IVehiculoService vehiculoService) {
+        this.vehiculoService = vehiculoService;
+    }
 
     // Endpoint principal para búsqueda de vehículos
     @GetMapping("/vehiculos")
@@ -28,17 +31,15 @@ public class N8nRestController {
             @RequestParam(required = false) Integer anioMax,
             @RequestParam(required = false) Double precioMin,
             @RequestParam(required = false) Double precioMax,
-            @RequestParam(required = false) String categoria
-    ) {
+            @RequestParam(required = false) String categoria) {
         try {
             System.out.println("🤖 [N8N] Solicitud de búsqueda recibida:");
             System.out.println("   - Marca: " + marca);
             System.out.println("   - Modelo: " + modelo);
             System.out.println("   - Año: " + anioMin + " - " + anioMax);
-            
+
             List<Vehiculo> resultados = vehiculoService.buscarVehiculos(
-                    marca, modelo, anioMin, anioMax, precioMin, precioMax, categoria
-            );
+                    marca, modelo, anioMin, anioMax, precioMin, precioMax, categoria);
 
             // Mapeamos a un formato JSON limpio y garantizado
             List<Map<String, Object>> respuesta = resultados.stream().map(v -> {
@@ -58,7 +59,7 @@ public class N8nRestController {
             }).collect(Collectors.toList());
 
             System.out.println("✅ [N8N] Encontrados " + respuesta.size() + " vehículos.");
-            
+
             return ResponseEntity.ok(respuesta);
 
         } catch (Exception e) {
@@ -67,14 +68,13 @@ public class N8nRestController {
                     .body(Map.of("error", "Error interno al procesar la búsqueda", "detalle", e.getMessage()));
         }
     }
-    
+
     // Endpoint de prueba para verificar conectividad
     @GetMapping("/ping")
     public ResponseEntity<?> ping() {
         return ResponseEntity.ok(Map.of(
-            "status", "online", 
-            "message", "Conexión exitosa con el backend local",
-            "timestamp", System.currentTimeMillis()
-        ));
+                "status", "online",
+                "message", "Conexión exitosa con el backend local",
+                "timestamp", System.currentTimeMillis()));
     }
 }

@@ -3,6 +3,7 @@ package com.concesionario.controller;
 import com.concesionario.model.Trabajador;
 import com.concesionario.model.Rol;
 import com.concesionario.repository.TrabajadorRepository;
+import com.concesionario.service.interfaces.ITrabajadorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,13 +21,14 @@ import java.util.stream.Collectors;
 @RequestMapping("/admin/workers")
 public class WorkerController {
 
-    private final TrabajadorRepository trabajadorRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ITrabajadorService trabajadorService;
 
     @Autowired
-    public WorkerController(TrabajadorRepository trabajadorRepository, PasswordEncoder passwordEncoder) {
-        this.trabajadorRepository = trabajadorRepository;
+    public WorkerController(PasswordEncoder passwordEncoder,
+            ITrabajadorService trabajadorService) {
         this.passwordEncoder = passwordEncoder;
+        this.trabajadorService = trabajadorService;
     }
 
     @PostMapping("/registro")
@@ -40,6 +42,7 @@ public class WorkerController {
             @RequestParam("horaFin") @DateTimeFormat(pattern = "HH:mm") LocalTime horaFin,
             @RequestParam(value = "diasTrabajo", required = false) List<String> diasTrabajo,
             @RequestParam(value = "roles", required = false) List<String> rolesStrings,
+            @RequestParam("sedeId") String sedeId,
             Model model,
             RedirectAttributes redirectAttributes) {
 
@@ -54,31 +57,21 @@ public class WorkerController {
         }
 
         try {
-            Trabajador trabajador = new Trabajador();
-            trabajador.setNombre(nombre);
-            trabajador.setApellido(apellido);
-            trabajador.setCorreo(correo);
-            trabajador.setIdentificacion(identificacion);
-            trabajador.setPassword(passwordEncoder.encode(password));
-            trabajador.setHoraInicioTrabajo(horaInicio);
-            trabajador.setHoraFinTrabajo(horaFin);
-            trabajador.setDiasTrabajo(diasTrabajo);
+            trabajadorService.registrarTrabajador(nombre, apellido, correo, identificacion, password,
+                    horaInicio, horaFin, diasTrabajo, sedeId);
 
-            List<Rol> roles = rolesStrings.stream()
-                    .map(Rol::valueOf)
-                    .collect(Collectors.toList());
-
-            trabajador.setRoles(roles);
-            trabajadorRepository.save(trabajador);
+            if (rolesStrings != null && !rolesStrings.isEmpty()) {
+                List<Rol> roles = rolesStrings.stream()
+                        .map(Rol::valueOf)
+                        .collect(Collectors.toList());
+                trabajadorService.setRoles(correo, roles);
+            }
 
             redirectAttributes.addFlashAttribute("success", "Trabajador registrado exitosamente");
             return "redirect:/admin/dashboard";
 
-        } catch (DataIntegrityViolationException e) {
-            model.addAttribute("error", "Error: El correo o identificación ya existen");
-            return manejarErrorRegistro(model, nombre, apellido, correo, identificacion, horaInicio, horaFin);
         } catch (Exception e) {
-            model.addAttribute("error", "Error inesperado: " + e.getMessage());
+            model.addAttribute("error", "Error: " + e.getMessage());
             return manejarErrorRegistro(model, nombre, apellido, correo, identificacion, horaInicio, horaFin);
         }
     }
@@ -99,7 +92,7 @@ public class WorkerController {
     @ResponseBody
     public String despedirTrabajador(@PathVariable String id) {
         try {
-            trabajadorRepository.deleteById(id);
+            trabajadorService.desactivarTrabajador(id);
             return "OK";
         } catch (Exception e) {
             return "Error: " + e.getMessage();

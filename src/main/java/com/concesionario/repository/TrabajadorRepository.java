@@ -11,10 +11,14 @@ public interface TrabajadorRepository extends MongoRepository<Trabajador, String
 
     // Búsquedas por credenciales
     Optional<Trabajador> findByCorreo(String correo);
+
     Optional<Trabajador> findByIdentificacion(String identificacion);
+
+    List<Trabajador> findByActivo(boolean activo);
 
     // Verificación de existencia
     boolean existsByCorreo(String correo);
+
     boolean existsByIdentificacion(String identificacion);
 
     // ✅ NUEVO: Búsqueda por token de recuperación

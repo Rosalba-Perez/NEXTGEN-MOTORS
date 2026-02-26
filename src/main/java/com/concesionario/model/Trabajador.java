@@ -50,6 +50,7 @@ public class Trabajador {
     private LocalDateTime fechaContratacion;
     private String tipoContrato; // "TIEMPO_COMPLETO", "MEDIO_TIEMPO", "TEMPORAL"
     private String observaciones;
+    private String sedeId;
 
     // Constructores
     public Trabajador() {
@@ -69,7 +70,7 @@ public class Trabajador {
     }
 
     public Trabajador(String nombre, String apellido, String identificacion, String correo,
-                      String password, String telefono, String direccion, String cargo) {
+            String password, String telefono, String direccion, String cargo) {
         this(nombre, apellido, identificacion, correo, password);
         this.telefono = telefono;
         this.direccion = direccion;
@@ -281,6 +282,15 @@ public class Trabajador {
         this.actualizarFechaModificacion();
     }
 
+    public String getSedeId() {
+        return sedeId;
+    }
+
+    public void setSedeId(String sedeId) {
+        this.sedeId = sedeId;
+        this.actualizarFechaModificacion();
+    }
+
     // Métodos de utilidad
     private void actualizarFechaModificacion() {
         this.fechaActualizacion = LocalDateTime.now();
@@ -313,7 +323,8 @@ public class Trabajador {
     }
 
     public boolean tieneAlgunRol(Rol... roles) {
-        if (this.roles == null) return false;
+        if (this.roles == null)
+            return false;
         for (Rol rol : roles) {
             if (this.roles.contains(rol)) {
                 return true;
@@ -397,8 +408,10 @@ public class Trabajador {
     // Métodos equals y hashCode
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         Trabajador that = (Trabajador) o;
 

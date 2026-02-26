@@ -4,8 +4,8 @@ import com.concesionario.model.Usuario;
 import com.concesionario.model.Administrador;
 import com.concesionario.model.Rol;
 import com.concesionario.service.interfaces.IUsuarioService;
-import com.concesionario.service.AdministradorService;
-import com.concesionario.service.ValidacionService;
+import com.concesionario.service.interfaces.IAdministradorService;
+import com.concesionario.service.interfaces.IValidacionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 
@@ -23,14 +23,13 @@ public class AuthController {
         return "error"; // Devuelve src/main/resources/templates/error.html
     }
 
-    @Autowired
-    private ValidacionService validacionService;
+    private final IValidacionService validacionService;
 
     private final IUsuarioService usuarioService;
-    private final AdministradorService administradorService;
+    private final IAdministradorService administradorService;
 
-    public AuthController(IUsuarioService usuarioService, AdministradorService administradorService,
-            ValidacionService validacionService) {
+    public AuthController(IUsuarioService usuarioService, IAdministradorService administradorService,
+            IValidacionService validacionService) {
         this.usuarioService = usuarioService;
         this.administradorService = administradorService;
         this.validacionService = validacionService;

@@ -1,13 +1,8 @@
 package com.concesionario.controller;
 
-import com.concesionario.model.Cita;
-import com.concesionario.model.Trabajador;
-import com.concesionario.model.Vehiculo;
-import com.concesionario.repository.TrabajadorRepository;
-import com.concesionario.service.interfaces.ICitaService;
-import com.concesionario.service.interfaces.IUsuarioService;
-import com.concesionario.service.interfaces.IVehiculoService;
-import com.concesionario.service.NotificacionService;
+import com.concesionario.service.interfaces.*;
+import com.concesionario.service.interfaces.IAdminNotificationService;
+import com.concesionario.service.interfaces.ITrabajadorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,26 +18,32 @@ public class AdminDashboardController {
     private final IVehiculoService vehiculoService;
     private final ICitaService citaService;
     private final IUsuarioService usuarioService;
-    private final NotificacionService notificacionService;
-    private final TrabajadorRepository trabajadorRepository;
+    private final IAdminNotificationService adminNotificationService;
+    private final ITrabajadorService trabajadorService;
+    private final com.concesionario.service.interfaces.ISedeService sedeService;
+    private final com.concesionario.service.interfaces.IJuntaService juntaService;
 
     @Autowired
     public AdminDashboardController(IVehiculoService vehiculoService,
             ICitaService citaService,
             IUsuarioService usuarioService,
-            NotificacionService notificacionService,
-            TrabajadorRepository trabajadorRepository) {
+            IAdminNotificationService adminNotificationService,
+            ITrabajadorService trabajadorService,
+            com.concesionario.service.interfaces.ISedeService sedeService,
+            com.concesionario.service.interfaces.IJuntaService juntaService) {
         this.vehiculoService = vehiculoService;
         this.citaService = citaService;
         this.usuarioService = usuarioService;
-        this.notificacionService = notificacionService;
-        this.trabajadorRepository = trabajadorRepository;
+        this.adminNotificationService = adminNotificationService;
+        this.trabajadorService = trabajadorService;
+        this.sedeService = sedeService;
+        this.juntaService = juntaService;
     }
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         // Estadísticas
-        model.addAttribute("totalCitas", citaService.contarTodasLasCitas());
+        model.addAttribute("totalCitas", citaService.contarCitas());
         model.addAttribute("totalUsuarios", usuarioService.contarUsuarios());
         model.addAttribute("totalVehiculos", vehiculoService.contarTodosVehiculos());
 
@@ -50,11 +51,13 @@ public class AdminDashboardController {
         model.addAttribute("vehiculos", vehiculoService.obtenerVehiculosNormales());
         model.addAttribute("anuncios", vehiculoService.obtenerDestacados());
         model.addAttribute("citas", citaService.obtenerCitasPendientes());
-        model.addAttribute("trabajadores", trabajadorRepository.findAll());
+        model.addAttribute("trabajadores", trabajadorService.listarActivos());
+        model.addAttribute("sedes", sedeService.listarTodas());
+        model.addAttribute("juntas", juntaService.listarTodas());
 
         // Notificaciones
-        model.addAttribute("numeroNotificaciones", notificacionService.contarCitasNoLeidas());
-        model.addAttribute("citasNoLeidas", notificacionService.obtenerCitasNoLeidas());
+        model.addAttribute("numeroNotificaciones", adminNotificationService.contarCitasNoLeidas());
+        model.addAttribute("citasNoLeidas", adminNotificationService.obtenerCitasNoLeidas());
 
         return "admin/dashboard";
     }

@@ -6,29 +6,39 @@ import java.io.IOException;
 import java.util.List;
 
 public interface IVehiculoService {
-    List<Vehiculo> obtenerTodos();
+        List<Vehiculo> obtenerTodos();
 
-    List<Vehiculo> obtenerDestacados();
+        List<Vehiculo> obtenerDestacados();
 
-    List<Vehiculo> obtenerVehiculosNormales();
+        List<Vehiculo> obtenerVehiculosNormales();
 
-    void crearVehiculoNormal(Vehiculo vehiculo, MultipartFile imagen, List<MultipartFile> otrasImagenes)
-            throws IOException;
+        void crearVehiculoNormal(Vehiculo vehiculo, MultipartFile imagen, List<MultipartFile> otrasImagenes)
+                        throws IOException;
 
-    void crearAnuncio(Vehiculo vehiculo, MultipartFile imagen) throws IOException;
+        void crearAnuncio(Vehiculo vehiculo, MultipartFile imagen) throws IOException;
 
-    void eliminarVehiculo(String id);
+        void crearAnuncioCompleto(Vehiculo vehiculo, MultipartFile imagen) throws IOException;
 
-    Vehiculo obtenerPorId(String id);
+        void eliminarVehiculo(String id);
 
-    void actualizarImagenVehiculo(Vehiculo vehiculo, MultipartFile imagen) throws IOException;
+        Vehiculo obtenerPorId(String id);
 
-    void guardarVehiculo(Vehiculo vehiculo);
+        void actualizarImagenVehiculo(Vehiculo vehiculo, MultipartFile imagen) throws IOException;
 
-    long contarTodosVehiculos();
+        void agregarImagenesGaleria(Vehiculo vehiculo, List<MultipartFile> nuevasImagenes) throws IOException;
 
-    List<Vehiculo> buscarVehiculos(String marca, String categoria, Integer añoMin, Integer añoMax, Double precioMin,
-            Double precioMax, String transmision);
+        void guardarVehiculo(Vehiculo vehiculo);
 
-    List<Vehiculo> obtenerDestacadosLimit(int limit);
+        long contarTodosVehiculos();
+
+        long contarVehiculosNormales();
+
+        long contarAnuncios();
+
+        List<Vehiculo> obtenerPorCategoria(String categoria);
+
+        List<Vehiculo> buscarVehiculos(String marca, String modelo, Integer anioMin, Integer anioMax, Double precioMin,
+                        Double precioMax, String categoria);
+
+        List<Vehiculo> obtenerDestacadosLimit(int limit);
 }

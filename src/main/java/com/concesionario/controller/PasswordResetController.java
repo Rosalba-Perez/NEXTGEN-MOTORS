@@ -1,6 +1,6 @@
 package com.concesionario.controller;
 
-import com.concesionario.service.PasswordResetService;
+import com.concesionario.service.interfaces.IPasswordResetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,8 +11,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/auth")
 public class PasswordResetController {
 
-    @Autowired
-    private PasswordResetService passwordResetService;
+    private final IPasswordResetService passwordResetService;
+
+    public PasswordResetController(IPasswordResetService passwordResetService) {
+        this.passwordResetService = passwordResetService;
+    }
 
     @GetMapping("/forgot-password")
     public String showForgotPasswordForm(Model model) {
@@ -21,7 +24,7 @@ public class PasswordResetController {
 
     @PostMapping("/forgot-password")
     public String processForgotPassword(@RequestParam String email,
-                                        RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
             passwordResetService.initiatePasswordReset(email);
             System.out.println("Email de recuperación enviado a: " + email);
@@ -63,7 +66,8 @@ public class PasswordResetController {
             // Usar close-window para reset-password
             model.addAttribute("closeWindow", true);
             model.addAttribute("redirectUrl", "/login");
-            model.addAttribute("success", "¡Contraseña restablecida exitosamente! Esta ventana se cerrará automáticamente.");
+            model.addAttribute("success",
+                    "¡Contraseña restablecida exitosamente! Esta ventana se cerrará automáticamente.");
 
             return "auth/close-window";
 
@@ -78,8 +82,8 @@ public class PasswordResetController {
     // Vista especial para cerrar ventanas (solo para reset-password)
     @GetMapping("/close-window")
     public String closeWindow(@RequestParam(required = false) String redirectUrl,
-                              @RequestParam(required = false) String message,
-                              Model model) {
+            @RequestParam(required = false) String message,
+            Model model) {
         if (redirectUrl != null) {
             model.addAttribute("redirectUrl", redirectUrl);
         }

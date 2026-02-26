@@ -1,6 +1,6 @@
 package com.concesionario.controller;
 
-import com.concesionario.service.NotificationService;
+import com.concesionario.service.interfaces.IPushNotificationService;
 import com.concesionario.repository.UsuarioRepository;
 import com.concesionario.model.Usuario;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,7 @@ import java.util.HashMap;
 public class DiagnosticController {
 
     @Autowired
-    private NotificationService notificationService;
+    private IPushNotificationService notificationService;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -29,27 +29,29 @@ public class DiagnosticController {
     public ResponseEntity<?> forceNotification(@RequestParam String correo) {
         try {
             Usuario usuario = usuarioRepository.findByCorreoUser(correo)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con correo: " + correo));
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado con correo: " + correo));
 
             String fcmToken = usuario.getFcmToken();
             if (fcmToken == null || fcmToken.isEmpty()) {
                 return ResponseEntity.badRequest().body("El usuario existe pero NO tiene Token FCM registrado.");
             }
 
-            notificationService.enviarNotificacion(usuario.getId(), "Test de Diagnóstico", "Si lees esto, las notificaciones funcionan ✅");
-            
+            notificationService.enviarNotificacion(usuario.getId(), "Test de Diagnóstico",
+                    "Si lees esto, las notificaciones funcionan ✅");
+
             Map<String, String> response = new HashMap<>();
             response.put("status", "Enviado");
             response.put("userId", usuario.getId());
             response.put("token_full", fcmToken);
-            
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
         }
     }
+
     @Autowired
-    private com.concesionario.service.AzureHubService azureHubService;
+    private com.concesionario.service.interfaces.IAzureHubService azureHubService;
 
     // Probar envío crudo (Raw Payload) para depurar formato
     @PostMapping("/send-raw")
@@ -57,9 +59,9 @@ public class DiagnosticController {
         try {
             System.out.println("Testing Raw Payload to: " + token);
             System.out.println("Body: " + jsonBody);
-            
+
             azureHubService.sendNotification(jsonBody, token);
-            
+
             return ResponseEntity.ok("Enviado (Raw). Verifica tu celular.");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error: " + e.getMessage());

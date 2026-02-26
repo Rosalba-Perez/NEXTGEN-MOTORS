@@ -14,4 +14,6 @@ public interface IProspectoService {
     void cambiarEstadoContactado(String prospectoId);
 
     void actualizarEstadoProspecto(String prospectoId, String nuevoEstado);
+
+    java.io.ByteArrayInputStream generarReporteRendimientoMensual() throws java.io.IOException;
 }

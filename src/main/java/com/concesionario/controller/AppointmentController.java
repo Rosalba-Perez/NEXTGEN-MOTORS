@@ -2,8 +2,8 @@ package com.concesionario.controller;
 
 import com.concesionario.model.Cita;
 import com.concesionario.service.interfaces.ICitaService;
-import com.concesionario.service.NotificacionService;
-import com.concesionario.service.NotificationService;
+import com.concesionario.service.interfaces.IAdminNotificationService;
+import com.concesionario.service.interfaces.IPushNotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -22,23 +22,23 @@ import java.util.stream.Collectors;
 public class AppointmentController {
 
     private final ICitaService citaService;
-    private final NotificacionService notificacionService;
-    private final NotificationService notificationService;
+    private final IAdminNotificationService adminNotificationService;
+    private final IPushNotificationService pushNotificationService;
 
     @Autowired
     public AppointmentController(ICitaService citaService,
-            NotificacionService notificacionService,
-            NotificationService notificationService) {
+            IAdminNotificationService adminNotificationService,
+            IPushNotificationService pushNotificationService) {
         this.citaService = citaService;
-        this.notificacionService = notificacionService;
-        this.notificationService = notificationService;
+        this.adminNotificationService = adminNotificationService;
+        this.pushNotificationService = pushNotificationService;
     }
 
     @GetMapping
     public String listarCitas(Model model) {
         List<Cita> citas = citaService.obtenerTodasLasCitas();
         model.addAttribute("citas", citas);
-        model.addAttribute("numeroNotificaciones", notificacionService.contarCitasNoLeidas());
+        model.addAttribute("numeroNotificaciones", adminNotificationService.contarCitasNoLeidas());
         return "Admin/CitasLista";
     }
 
@@ -54,7 +54,7 @@ public class AppointmentController {
         citaService.guardarCita(cita);
 
         if (cita.getUsuario() != null) {
-            notificationService.enviarNotificacion(
+            pushNotificationService.enviarNotificacion(
                     cita.getUsuario().getId(),
                     "Actualización de Cita",
                     "El administrador cambió el estado de tu cita a: " + estado);
@@ -74,7 +74,7 @@ public class AppointmentController {
         citaService.guardarCita(cita);
 
         if (cita.getUsuario() != null) {
-            notificationService.enviarNotificacion(
+            pushNotificationService.enviarNotificacion(
                     cita.getUsuario().getId(),
                     "Cita Programada",
                     "El administrador ha programado tu cita para el: " + fecha);
@@ -100,7 +100,7 @@ public class AppointmentController {
         citaService.guardarCita(cita);
 
         if (cita.getUsuario() != null) {
-            notificationService.enviarNotificacion(
+            pushNotificationService.enviarNotificacion(
                     cita.getUsuario().getId(),
                     "Nueva Nota en tu Cita",
                     "Nota del administrador: " + (notas.length() > 50 ? notas.substring(0, 47) + "..." : notas));

@@ -17,6 +17,8 @@ public interface IUsuarioService {
 
     Usuario findByCorreoUser(String correo);
 
+    void calcularDatosDesdeCitas(Usuario usuario);
+
     List<Usuario> findAll();
 
     Usuario findById(String id);

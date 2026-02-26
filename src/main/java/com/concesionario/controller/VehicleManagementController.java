@@ -1,8 +1,8 @@
 package com.concesionario.controller;
 
 import com.concesionario.model.Vehiculo;
+import com.concesionario.service.interfaces.ISupabaseStorageService;
 import com.concesionario.service.interfaces.IVehiculoService;
-import com.concesionario.service.SupabaseStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,11 +20,11 @@ import java.util.stream.Collectors;
 public class VehicleManagementController {
 
     private final IVehiculoService vehiculoService;
-    private final SupabaseStorageService supabaseStorageService;
+    private final ISupabaseStorageService supabaseStorageService;
 
     @Autowired
     public VehicleManagementController(IVehiculoService vehiculoService,
-            SupabaseStorageService supabaseStorageService) {
+            ISupabaseStorageService supabaseStorageService) {
         this.vehiculoService = vehiculoService;
         this.supabaseStorageService = supabaseStorageService;
     }

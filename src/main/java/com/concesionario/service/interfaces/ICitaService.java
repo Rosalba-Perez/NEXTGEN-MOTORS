@@ -16,13 +16,15 @@ public interface ICitaService {
 
     List<Cita> obtenerCitasPorUsuarioId(String usuarioId);
 
+    List<Cita> obtenerCitasPorTrabajador(String asesorId);
+
     Cita obtenerCitaPorId(String id);
 
     void guardarCitaSimple(Cita cita, Usuario usuario, Vehiculo vehiculo);
 
     void crearCitaConEmbedding(Cita cita, Usuario usuario, Vehiculo vehiculo);
 
-    long contarTodasLasCitas();
+    long contarCitas();
 
     boolean isHoraDisponible(String trabajadorId, String fechaCita, String horaCita);
 

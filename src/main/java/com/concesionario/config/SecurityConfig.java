@@ -1,9 +1,9 @@
 package com.concesionario.config;
 
-import com.concesionario.service.AuthService;
-import com.concesionario.service.CustomOAuth2UserService;
-import com.concesionario.service.CustomOidcUserService;
-import com.concesionario.service.TrabajadorDetailsService;
+import com.concesionario.service.interfaces.IAuthService;
+import com.concesionario.service.impl.CustomOAuth2UserService;
+import com.concesionario.service.impl.CustomOidcUserService;
+import com.concesionario.service.interfaces.ITrabajadorDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,10 +28,10 @@ import java.util.Collection;
 public class SecurityConfig {
 
     @Autowired
-    private AuthService authService;
+    private IAuthService authService;
 
     @Autowired
-    private TrabajadorDetailsService trabajadorDetailsService;
+    private ITrabajadorDetailsService trabajadorDetailsService;
 
     @Autowired
     private CustomOAuth2SuccessHandler customOAuth2SuccessHandler;
@@ -80,38 +80,36 @@ public class SecurityConfig {
                                 "/auth/**",
                                 "/test/status/**",
                                 "/api/usuario/**",
-                                "/api/n8n/**"
-                        ).permitAll()
+                                "/api/n8n/**")
+                        .permitAll()
                         .requestMatchers("/perfil_gestor").hasRole("TRB_GESTOR")
                         .requestMatchers("/perfil_analisis").hasRole("TRB_ANALISIS")
                         .requestMatchers("/perfil_asesor").hasRole("TRB_ASESOR")
-                        .requestMatchers("/admin/**").hasAnyRole("ADMINISTRADOR", "TRABAJADOR", "TRB_GESTOR", "TRB_ANALISIS", "TRB_ASESOR")
-                        .requestMatchers("/usuario/cita", "/usuario/cita/guardar").hasAnyRole("USUARIO", "ADMINISTRADOR", "TRABAJADOR", "TRB_GESTOR", "TRB_ANALISIS", "TRB_ASESOR")
-                        .anyRequest().authenticated()
-                )
+                        .requestMatchers("/admin/**")
+                        .hasAnyRole("ADMINISTRADOR", "TRABAJADOR", "TRB_GESTOR", "TRB_ANALISIS", "TRB_ASESOR")
+                        .requestMatchers("/usuario/cita", "/usuario/cita/guardar")
+                        .hasAnyRole("USUARIO", "ADMINISTRADOR", "TRABAJADOR", "TRB_GESTOR", "TRB_ANALISIS",
+                                "TRB_ASESOR")
+                        .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
                         .successHandler(authenticationSuccessHandler())
                         .failureUrl("/login?error=true")
-                        .permitAll()
-                )
+                        .permitAll())
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                                 .oidcUserService(customOidcUserService)
-                                .userAuthoritiesMapper(userAuthoritiesMapper())
-                        )
-                        .successHandler(customOAuth2SuccessHandler)
-                )
+                                .userAuthoritiesMapper(userAuthoritiesMapper()))
+                        .successHandler(customOAuth2SuccessHandler))
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/usuario/Inicio")
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
-                        .permitAll()
-                )
+                        .permitAll())
                 // ✅ CONFIGURACIÓN MEJORADA: Control de sesiones concurrentes
                 .sessionManagement(session -> session
                         .sessionFixation().migrateSession() // Protege contra ataques de fixation
@@ -144,20 +142,15 @@ public class SecurityConfig {
 
             if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_TRB_GESTOR"))) {
                 response.sendRedirect("/perfil_gestor");
-            }
-            else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_TRB_ANALISIS"))) {
+            } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_TRB_ANALISIS"))) {
                 response.sendRedirect("/perfil_analisis");
-            }
-            else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_TRB_ASESOR"))) {
+            } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_TRB_ASESOR"))) {
                 response.sendRedirect("/perfil_asesor");
-            }
-            else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR"))) {
+            } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR"))) {
                 response.sendRedirect("/admin/dashboard");
-            }
-            else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_TRABAJADOR"))) {
+            } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_TRABAJADOR"))) {
                 response.sendRedirect("/trabajador/dashboard");
-            }
-            else {
+            } else {
                 response.sendRedirect("/usuario/Inicio");
             }
         };
