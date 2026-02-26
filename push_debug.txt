@@ -1,0 +1,114 @@
+﻿git : remote: error: GH013: 
+Repository rule violations found 
+for refs/heads/DockerEnrogk.        
+En línea: 1 Carácter: 1
++ git push -u origin DockerEnrogk 
+2>&1 | Out-File -FilePath 
+push_debug. ...
++ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSp 
+   ecified: (remote: error: ...Enr  
+  ogk.        :String) [], Remote   
+ Exception
+    + FullyQualifiedErrorId : Nativ 
+   eCommandError
+ 
+remote: 
+remote: - GITHUB PUSH PROTECTION    
+    
+remote:   ÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇö        
+remote:     Resolve the following 
+violations before pushing again     
+   
+remote: 
+remote:     - Push cannot contain 
+secrets        
+remote: 
+remote:             
+remote:      (?) Learn how to 
+resolve a blocked push        
+remote:      https://docs.github.com
+/code-security/secret-scanning/worki
+ng-with-secret-scanning-and-push-pro
+tection/working-with-push-protection
+-from-the-command-line#resolving-a-b
+locked-push        
+remote:             
+remote:             
+remote:       ÔÇöÔÇö Google OAuth 
+Client ID ÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇö        
+remote:        locations:        
+remote:          - commit: fbc346deb
+cc65a25bb1d80d4e0a2f907a754cb4c     
+   
+remote:            path: .env:17    
+    
+remote:          - commit: fbc346deb
+cc65a25bb1d80d4e0a2f907a754cb4c     
+   
+remote:            path: 
+.env.example:17        
+remote:          - commit: fbc346deb
+cc65a25bb1d80d4e0a2f907a754cb4c     
+   
+remote:            path: src/main/re
+sources/application.properties:102  
+      
+remote:             
+remote:        (?) To push, remove 
+secret from commit(s) or follow 
+this URL to allow the secret.       
+ 
+remote:        https://github.com/jo
+rge24d1/Prueba_PDA/security/secret-s
+canning/unblock-secret/39dqaESBIRrT1
+nLnYFpA3PQpG6N        
+remote:             
+remote:             
+remote:       ÔÇöÔÇö Google OAuth 
+Client Secret ÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔ
+ÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔ
+ÇöÔÇöÔÇöÔÇöÔÇö        
+remote:        locations:        
+remote:          - commit: fbc346deb
+cc65a25bb1d80d4e0a2f907a754cb4c     
+   
+remote:            path: .env:18    
+    
+remote:          - commit: fbc346deb
+cc65a25bb1d80d4e0a2f907a754cb4c     
+   
+remote:            path: 
+.env.example:18        
+remote:          - commit: fbc346deb
+cc65a25bb1d80d4e0a2f907a754cb4c     
+   
+remote:            path: src/main/re
+sources/application.properties:103  
+      
+remote:             
+remote:        (?) To push, remove 
+secret from commit(s) or follow 
+this URL to allow the secret.       
+ 
+remote:        https://github.com/jo
+rge24d1/Prueba_PDA/security/secret-s
+canning/unblock-secret/39dqaESqlFmGD
+IJ63glkh5Bl4EH        
+remote:             
+remote: 
+remote: 
+To https://github.com/jorge24d1/Prue
+ba_PDA.git
+ ! [remote rejected] DockerEnrogk 
+-> DockerEnrogk (push declined due 
+to repository rule violations)
+error: failed to push some refs to '
+https://github.com/jorge24d1/Prueba_
+PDA.git'
