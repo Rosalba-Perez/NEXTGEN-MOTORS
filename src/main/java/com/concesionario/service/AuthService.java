@@ -22,32 +22,48 @@ public class AuthService implements UserDetailsService {
     @Autowired
     private AdministradorRepository administradorRepository;
 
+    @Autowired
+    private TrabajadorDetailsService trabajadorDetailsService;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        // 1. Primero buscar en la nueva colección de Administradores
-        Optional<Administrador> administrador = administradorRepository.findByCorreoAdmin(username);
-        if (administrador.isPresent()) {
-            Administrador admin = administrador.get();
-            return User.builder()
-                    .username(admin.getCorreoAdmin())
-                    .password(admin.getPasswordAdmin())
-                    .roles(admin.getRol().name())
-                    .build();
+        // 1. Primero buscar en administradores
+        try {
+            Optional<Administrador> administrador = administradorRepository.findByCorreoAdmin(username);
+            if (administrador.isPresent()) {
+                Administrador admin = administrador.get();
+                return User.builder()
+                        .username(admin.getCorreoAdmin())
+                        .password(admin.getPasswordAdmin())
+                        .roles(admin.getRol().name())
+                        .build();
+            }
+        } catch (Exception e) {
+
         }
 
-        // 2. Si no es administrador, buscar en la colección de Usuarios
-        Optional<Usuario> usuario = usuarioRepository.findByCorreoUser(username);
-        if (usuario.isPresent()) {
-            Usuario user = usuario.get();
-            return User.builder()
-                    .username(user.getCorreoUser())
-                    .password(user.getPasswordUser())
-                    .roles(user.getRol().name())
-                    .build();
+        // 2. Luego buscar en usuarios
+        try {
+            Optional<Usuario> usuario = usuarioRepository.findByCorreoUser(username);
+            if (usuario.isPresent()) {
+                Usuario user = usuario.get();
+                return User.builder()
+                        .username(user.getCorreoUser())
+                        .password(user.getPasswordUser())
+                        .roles(user.getRol().name())
+                        .build();
+            }
+        } catch (Exception e) {
+
         }
 
-        // 3. Si no se encuentra en ninguna colección, lanzar excepción
-        throw new UsernameNotFoundException("Usuario no encontrado: " + username);
+        // 3. Finalmente buscar en trabajadores
+        try {
+            return trabajadorDetailsService.loadUserByUsername(username);
+        } catch (UsernameNotFoundException e) {
+            // Si tampoco encuentra en trabajadores, lanzar la excepción
+            throw new UsernameNotFoundException("Usuario no encontrado en ningún repositorio: " + username);
+        }
     }
 }

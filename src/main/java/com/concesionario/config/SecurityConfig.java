@@ -126,16 +126,10 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @Bean
     public UserDetailsService userDetailsService() {
-        return username -> {
-            try {
-                return authService.loadUserByUsername(username);
-            } catch (UsernameNotFoundException e) {
-                return trabajadorDetailsService.loadUserByUsername(username);
-            }
-        };
+        return authService;
     }
+
 
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
