@@ -12,11 +12,13 @@ public class TrabajadorDTO {
     private LocalTime horaInicioTrabajo;
     private LocalTime horaFinTrabajo;
     private List<String> diasTrabajo;
+    private String sede;
 
     public TrabajadorDTO() {
     }
 
-    public TrabajadorDTO(String nombre, String apellido, String identificacion, String correo, String password, LocalTime horaInicioTrabajo, LocalTime horaFinTrabajo, List<String> diasTrabajo) {
+    public TrabajadorDTO(String nombre, String apellido, String identificacion, String correo, String password,
+            LocalTime horaInicioTrabajo, LocalTime horaFinTrabajo, List<String> diasTrabajo, String sede) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.identificacion = identificacion;
@@ -25,6 +27,7 @@ public class TrabajadorDTO {
         this.horaInicioTrabajo = horaInicioTrabajo;
         this.horaFinTrabajo = horaFinTrabajo;
         this.diasTrabajo = diasTrabajo;
+        this.sede = sede;
     }
 
     public String getNombre() {
@@ -89,5 +92,13 @@ public class TrabajadorDTO {
 
     public void setDiasTrabajo(List<String> diasTrabajo) {
         this.diasTrabajo = diasTrabajo;
+    }
+
+    public String getSede() {
+        return sede;
+    }
+
+    public void setSede(String sede) {
+        this.sede = sede;
     }
 }

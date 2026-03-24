@@ -86,8 +86,8 @@ public class AdminController {
     public Map<String, Object> forceNotification() {
         Map<String, Object> resultado = new HashMap<>();
         resultado.put("timestamp", LocalDateTime.now().toString());
-        resultado.put("usuario_prueba", "prueba@gmail.com"); 
-        
+        resultado.put("usuario_prueba", "prueba@gmail.com");
+
         try {
             // 1. Buscar usuario
             Usuario usuario = usuarioRepository.findByCorreoUser("prueba@gmail.com").orElse(null);
@@ -95,11 +95,12 @@ public class AdminController {
                 resultado.put("error", "Usuario no encontrado");
                 return resultado;
             }
-            
+
             // 2. Verificar Token
             String token = usuario.getFcmToken();
-            resultado.put("token_intentado", token != null && token.length() > 10 ? token.substring(0, 10) + "..." : "NULL/VACIO");
-            
+            resultado.put("token_intentado",
+                    token != null && token.length() > 10 ? token.substring(0, 10) + "..." : "NULL/VACIO");
+
             if (token == null || token.isEmpty()) {
                 resultado.put("envio_exitoso", false);
                 resultado.put("razon", "El usuario no tiene Token FCM registrado");
@@ -107,9 +108,8 @@ public class AdminController {
             }
 
             // 3. Verificar Credenciales en uso
-             // (Simplificado para evitar errores de compilación)
-             resultado.put("ACTUAL_KEY_ID_EN_SERVIDOR", "HARDCODED_V4_CHECKED");
-
+            // (Simplificado para evitar errores de compilación)
+            resultado.put("ACTUAL_KEY_ID_EN_SERVIDOR", "HARDCODED_V4_CHECKED");
 
             // 4. Intentar envío directo (Bypassing NotificationService para aislar errores)
             Message message = Message.builder()
@@ -131,9 +131,10 @@ public class AdminController {
             resultado.put("error_mensaje", e.getMessage());
             // Stacktrace parcial
             StackTraceElement[] trace = e.getStackTrace();
-            if (trace.length > 0) resultado.put("donde", trace[0].toString());
+            if (trace.length > 0)
+                resultado.put("donde", trace[0].toString());
         }
-        
+
         return resultado;
     }
 
@@ -143,7 +144,6 @@ public class AdminController {
         long totalCitas = citaService.contarTodasLasCitas();
         long totalUsuarios = usuarioService.contarUsuarios();
         long totalVehiculos = vehiculoService.contarTodosVehiculos();
-
 
         // Listados
         List<Vehiculo> vehiculos = vehiculoService.obtenerVehiculosNormales();
@@ -175,9 +175,9 @@ public class AdminController {
             @RequestParam("horaFin") @DateTimeFormat(pattern = "HH:mm") LocalTime horaFin,
             @RequestParam(value = "diasTrabajo", required = false) List<String> diasTrabajo,
             @RequestParam(value = "roles", required = false) List<String> rolesStrings, // ✅ NUEVO PARÁMETRO
+            @RequestParam(value = "sede", required = false) String sede, // ✅ NUEVA SEDE
             Model model,
             RedirectAttributes redirectAttributes) {
-
 
         // Validación básica de días de trabajo
         if (diasTrabajo == null || diasTrabajo.isEmpty()) {
@@ -215,9 +215,15 @@ public class AdminController {
 
             trabajador.setRoles(roles);
 
+            // Asignar sede si tiene el rol de asesor
+            if (roles.contains(Rol.TRB_ASESOR)) {
+                trabajador.setSede(sede);
+            }
+
             trabajadorRepository.save(trabajador);
 
-            redirectAttributes.addFlashAttribute("success", "Trabajador registrado exitosamente con roles: " + rolesStrings);
+            redirectAttributes.addFlashAttribute("success",
+                    "Trabajador registrado exitosamente con roles: " + rolesStrings);
             return "redirect:/admin/dashboard";
 
         } catch (DataIntegrityViolationException e) {
@@ -230,8 +236,8 @@ public class AdminController {
     }
 
     private String manejarErrorRegistro(Model model, String nombre, String apellido,
-                                        String correo, String identificacion,
-                                        LocalTime horaInicio, LocalTime horaFin) {
+            String correo, String identificacion,
+            LocalTime horaInicio, LocalTime horaFin) {
         model.addAttribute("nombre", nombre);
         model.addAttribute("apellido", apellido);
         model.addAttribute("correo", correo);
@@ -240,6 +246,7 @@ public class AdminController {
         model.addAttribute("horaFin", horaFin != null ? horaFin.toString() : "");
         return "admin/dashboard";
     }
+
     @PostMapping("/despedir-trabajador/{id}")
     @ResponseBody
     public String despedirTrabajador(@PathVariable String id) {
@@ -387,7 +394,7 @@ public class AdminController {
 
     // ❌ ELIMINADO: Ya no necesitamos el método guardarImagen local
     // private String guardarImagen(MultipartFile imagen) throws IOException {
-    //     // Este método ha sido eliminado porque ahora usamos Cloudinary
+    // // Este método ha sido eliminado porque ahora usamos Cloudinary
     // }
 
     @GetMapping("/citas")
@@ -413,10 +420,9 @@ public class AdminController {
         // 🔔 NOTIFICACIÓN PUSH
         if (cita.getUsuario() != null) {
             notificationService.enviarNotificacion(
-                cita.getUsuario().getId(), 
-                "Actualización de Cita", 
-                "El administrador cambió el estado de tu cita a: " + estado
-            );
+                    cita.getUsuario().getId(),
+                    "Actualización de Cita",
+                    "El administrador cambió el estado de tu cita a: " + estado);
         }
 
         return "OK";
@@ -424,23 +430,34 @@ public class AdminController {
 
     @ResponseBody
     @PostMapping("/citas/{id}/asignar-fecha")
-    public String asignarFechaCita(@PathVariable String id, @RequestParam String fecha) {
+    public String asignarFechaCita(@PathVariable String id,
+            @RequestParam String fecha,
+            @RequestParam String horaInicio,
+            @RequestParam String horaFin) {
         Cita cita = citaService.obtenerCitaPorId(id);
         if (cita == null) {
             return "Cita no encontrada";
         }
 
-        LocalDateTime fechaHora = LocalDateTime.parse(fecha.replace(" ", "T"));
+        // El Administrador tiene libertad total de asignación según requerimiento del usuario
+        // skipping strict validation call here
+
+        // Guardar detalles del rango horario
+        cita.setFechaCita(fecha);
+        cita.setHoraCita(horaInicio);
+        cita.setHoraFinCita(horaFin);
+
+        // Usar horaInicio para fechaAsignada (debe estar en formato estricto ej: 14:00)
+        LocalDateTime fechaHora = LocalDateTime.parse(fecha + "T" + horaInicio);
         cita.setFechaAsignada(fechaHora);
         citaService.guardarCita(cita);
 
         // 🔔 NOTIFICACIÓN PUSH
         if (cita.getUsuario() != null) {
             notificationService.enviarNotificacion(
-                cita.getUsuario().getId(), 
-                "Cita Programada", 
-                "El administrador ha programado tu cita para el: " + fecha
-            );
+                    cita.getUsuario().getId(),
+                    "Cita Programada",
+                    "El administrador ha programado tu cita para el: " + fecha + " a las " + horaInicio);
         }
 
         return "OK";
@@ -467,10 +484,9 @@ public class AdminController {
         // 🔔 NOTIFICACIÓN PUSH
         if (cita.getUsuario() != null) {
             notificationService.enviarNotificacion(
-                cita.getUsuario().getId(), 
-                "Nueva Nota en tu Cita", 
-                "Nota del administrador: " + (notas.length() > 50 ? notas.substring(0, 47) + "..." : notas)
-            );
+                    cita.getUsuario().getId(),
+                    "Nueva Nota en tu Cita",
+                    "Nota del administrador: " + (notas.length() > 50 ? notas.substring(0, 47) + "..." : notas));
         }
 
         return "OK";
@@ -559,7 +575,8 @@ public class AdminController {
 
             // Subir modelo 3D si existe
             if (modelo3d != null && !modelo3d.isEmpty()) {
-                System.out.println("📦 [AdminController] Modelo 3D anuncio detectado: " + modelo3d.getOriginalFilename());
+                System.out
+                        .println("📦 [AdminController] Modelo 3D anuncio detectado: " + modelo3d.getOriginalFilename());
                 try {
                     String urlModelo = supabaseStorageService.uploadFile(modelo3d);
                     System.out.println("✅ [AdminController] Modelo 3D anuncio subido a: " + urlModelo);
@@ -615,7 +632,8 @@ public class AdminController {
 
         // Subir modelo 3D si existe
         if (modelo3d != null && !modelo3d.isEmpty()) {
-            System.out.println("📦 [AdminController] Modelo 3D detectado: " + modelo3d.getOriginalFilename() + " (" + modelo3d.getSize() + " bytes)");
+            System.out.println("📦 [AdminController] Modelo 3D detectado: " + modelo3d.getOriginalFilename() + " ("
+                    + modelo3d.getSize() + " bytes)");
             try {
                 String urlModelo = supabaseStorageService.uploadFile(modelo3d);
                 System.out.println("✅ [AdminController] Modelo 3D subido a: " + urlModelo);
@@ -625,7 +643,7 @@ public class AdminController {
                 // No detenemos el guardado del vehículo, pero logueamos el error
             }
         } else {
-             System.out.println("⚠️ [AdminController] No se recibió archivo de modelo 3D opciona o estaba vacío.");
+            System.out.println("⚠️ [AdminController] No se recibió archivo de modelo 3D opciona o estaba vacío.");
         }
 
         // Procesar los colores

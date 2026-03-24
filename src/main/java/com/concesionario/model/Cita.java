@@ -11,19 +11,16 @@ import java.time.LocalDateTime;
 @Document(collection = "citas")
 public class Cita {
 
-
     @Id
     private String id;
 
-    private UsuarioDTO usuario;  // Embedded DTO
-    private VehiculoDTO vehiculo;  // Embedded DTO
+    private UsuarioDTO usuario; // Embedded DTO
+    private VehiculoDTO vehiculo; // Embedded DTO
 
     private String nombres;
     private String apellidos;
     private String cedula;
     private String correoElectronico;
-    
-
 
     private String modelo;
     private String vehiculoId;
@@ -31,7 +28,6 @@ public class Cita {
     private String colorVehiculo;
     private String telefono;
     private String tipo; // Pick-Ups, Camionetas, Automóviles, etc.
-    
 
     private String sede;
     private String comentario;
@@ -45,6 +41,24 @@ public class Cita {
     private String trabajadorId;
     private String fechaCita;
     private String horaCita;
+    private String horaFinCita;
+    private String trabajadorNombre;
+
+    public String getTrabajadorNombre() {
+        return trabajadorNombre;
+    }
+
+    public void setTrabajadorNombre(String trabajadorNombre) {
+        this.trabajadorNombre = trabajadorNombre;
+    }
+
+    public String getHoraFinCita() {
+        return horaFinCita;
+    }
+
+    public void setHoraFinCita(String horaFinCita) {
+        this.horaFinCita = horaFinCita;
+    }
 
     public String getTrabajadorId() {
         return trabajadorId;
@@ -76,8 +90,8 @@ public class Cita {
 
     // Constructor con parámetros (sin fechaCreacion ni leida)
     public Cita(String nombres, String apellidos, String cedula, String correoElectronico,
-                String telefono, String sede, String tipo, String vehiculoId,
-                String nombreVehiculo, String comentario) {
+            String telefono, String sede, String tipo, String vehiculoId,
+            String nombreVehiculo, String comentario) {
         this.nombres = nombres;
         this.apellidos = apellidos;
         this.cedula = cedula;
@@ -90,21 +104,22 @@ public class Cita {
         this.comentario = comentario;
     }
 
-
     // otros setters y getters para dtos
     public UsuarioDTO getUsuario() {
         return usuario;
     }
+
     public void setUsuario(UsuarioDTO usuario) {
         this.usuario = usuario;
     }
+
     public VehiculoDTO getVehiculo() {
         return vehiculo;
     }
+
     public void setVehiculo(VehiculoDTO vehiculo) {
         this.vehiculo = vehiculo;
     }
-
 
     // Getters y Setters (incluyendo los nuevos campos)
     public String getId() {
@@ -250,6 +265,7 @@ public class Cita {
     public void setNotasAdmin(String notasAdmin) {
         this.notasAdmin = notasAdmin;
     }
+
     public String getColorVehiculo() {
         return colorVehiculo;
     }
@@ -257,5 +273,5 @@ public class Cita {
     public void setColorVehiculo(String colorVehiculo) {
         this.colorVehiculo = colorVehiculo;
     }
-    
+
 }

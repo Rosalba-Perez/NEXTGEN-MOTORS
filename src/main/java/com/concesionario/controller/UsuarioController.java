@@ -2,8 +2,6 @@ package com.concesionario.controller;
 
 import com.concesionario.utils.SecurityUtils;
 
-
-
 import java.security.Principal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -50,8 +48,6 @@ public class UsuarioController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-
 
     @GetMapping("/perfil")
     public String verPerfil(Model model, Principal principal) {
@@ -104,9 +100,9 @@ public class UsuarioController {
 
     @PostMapping("/completar-perfil")
     public String guardarPerfilCompleto(@RequestParam String identificacion,
-                                        @RequestParam String password,
-                                        Principal principal,
-                                        RedirectAttributes redirectAttributes) {
+            @RequestParam String password,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         try {
             String email = getEmailFromPrincipal(principal);
             Usuario usuario = usuarioService.findByCorreoUser(email);
@@ -114,7 +110,8 @@ public class UsuarioController {
             // Encriptar la contraseña antes de guardar
             usuario.setPasswordUser(passwordEncoder.encode(password));
             usuarioRepository.save(usuario);
-            redirectAttributes.addFlashAttribute("success", "Perfil completado exitosamente. Ahora puedes usar tu contraseña para entrar.");
+            redirectAttributes.addFlashAttribute("success",
+                    "Perfil completado exitosamente. Ahora puedes usar tu contraseña para entrar.");
             return "redirect:/usuario/perfil";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error al completar el perfil: " + e.getMessage());
@@ -130,7 +127,6 @@ public class UsuarioController {
     public String Inicioff() {
         return "agendamiento";
     }
-
 
     @GetMapping("/Inicio")
     public String Inicio(Model model) {
@@ -152,7 +148,6 @@ public class UsuarioController {
 
         return "index";
     }
-
 
     @GetMapping("/cita")
     public String mostrarFormularioCita(
@@ -201,28 +196,21 @@ public class UsuarioController {
         return "cita";
     }
 
-
-
     @PostMapping("/cita/guardar")
     public String guardarCita(@ModelAttribute Cita cita,
-                              Principal principal,
-                              RedirectAttributes redirectAttributes) {
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
         try {
-            // 1. Validar que el trabajador exista
+            // 1. Validar que el trabajador exista y guardar su nombre y sede
             Trabajador trabajador = trabajadorRepository.findById(cita.getTrabajadorId())
                     .orElseThrow(() -> new RuntimeException("Trabajador no encontrado"));
+            
+            cita.setTrabajadorNombre(trabajador.getNombre() + " " + trabajador.getApellido());
+            cita.setSede(trabajador.getSede());
 
-            // 2. Validar que la fecha sea un día laboral del trabajador
-            if (!esDiaLaboral(trabajador, cita.getFechaCita())) {
-                redirectAttributes.addFlashAttribute("error", "El trabajador no labora ese día");
-                return "redirect:/usuario/cita";
-            }
-
-            // 3. Validar disponibilidad de hora
-            if (!citaService.isHoraDisponible(cita.getTrabajadorId(), cita.getFechaCita(), cita.getHoraCita())) {
-                redirectAttributes.addFlashAttribute("error", "La hora seleccionada ya está ocupada para este trabajador");
-                return "redirect:/usuario/cita";
-            }
+            // Como el cliente ya no envía fecha ni hora, eliminamos la validación de
+            // disponibilidad
+            // El estado por defecto es Pendiente y fechaCita/horaCita son nulos.
 
             // Resto de la lógica de guardado...
             String email = getEmailFromPrincipal(principal);
@@ -243,7 +231,7 @@ public class UsuarioController {
                 }
             }
 
-            if("Otros".equals(cita.getTipo())) {
+            if ("Otros".equals(cita.getTipo())) {
                 citaService.guardarCitaSimple(cita, usuario, vehiculo);
             } else {
                 citaService.crearCitaConEmbedding(cita, usuario, vehiculo);
@@ -273,23 +261,30 @@ public class UsuarioController {
 
     private String convertirDiaEspanol(DayOfWeek dia) {
         switch (dia) {
-            case MONDAY: return "LUNES";
-            case TUESDAY: return "MARTES";
-            case WEDNESDAY: return "MIERCOLES";
-            case THURSDAY: return "JUEVES";
-            case FRIDAY: return "VIERNES";
-            case SATURDAY: return "SABADO";
-            case SUNDAY: return "DOMINGO";
-            default: return "";
+            case MONDAY:
+                return "LUNES";
+            case TUESDAY:
+                return "MARTES";
+            case WEDNESDAY:
+                return "MIERCOLES";
+            case THURSDAY:
+                return "JUEVES";
+            case FRIDAY:
+                return "VIERNES";
+            case SATURDAY:
+                return "SABADO";
+            case SUNDAY:
+                return "DOMINGO";
+            default:
+                return "";
         }
     }
 
-
     private boolean validarDatosInmutables(Cita cita, Usuario usuario) {
         return usuario.getNombreUser().equals(cita.getNombres()) &&
-               usuario.getApellidoUser().equals(cita.getApellidos()) &&
-               usuario.getIdentificacionUser().equals(cita.getCedula()) &&
-               usuario.getCorreoUser().equals(cita.getCorreoElectronico());
+                usuario.getApellidoUser().equals(cita.getApellidos()) &&
+                usuario.getIdentificacionUser().equals(cita.getCedula()) &&
+                usuario.getCorreoUser().equals(cita.getCorreoElectronico());
     }
 
     @GetMapping("/mis-citas")
@@ -298,13 +293,13 @@ public class UsuarioController {
         Usuario usuario = usuarioRepository.findByCorreoUser(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
 
-
         List<Cita> citas = citaService.obtenerCitasPorUsuarioId(usuario.getId());
         model.addAttribute("citas", citas);
         model.addAttribute("nombreUsuario", usuario.getNombreUser() + " " + usuario.getApellidoUser());
         model.addAttribute("citas", citas);
         return "Usuario/MisCitas";
     }
+
     @GetMapping("/check-disponibilidad")
     public ResponseEntity<?> checkDisponibilidad(
             @RequestParam String trabajadorId,
@@ -335,6 +330,7 @@ public class UsuarioController {
         List<String> horasOcupadas = citaService.getHorasOcupadas(trabajadorId, fecha);
         return ResponseEntity.ok(horasOcupadas);
     }
+
     @GetMapping("/check-dia-trabajador")
     public ResponseEntity<?> verificarDiaTrabajador(
             @RequestParam String trabajadorId,
@@ -364,6 +360,5 @@ public class UsuarioController {
 
         return ResponseEntity.ok(response);
     }
-
 
 }

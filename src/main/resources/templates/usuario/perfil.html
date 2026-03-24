@@ -803,10 +803,11 @@
                         <tr>
                             <th>Tipo</th>
                             <th>Auto</th>
-                            <th>Color</th>
-                            <th>Fecha Solicitud</th>
+                            <th>Sede</th>
+                            <th>Asesor</th>
+                            <th>Fecha</th>
+                            <th>Horario</th>
                             <th>Estado</th>
-                            <th>Fecha Asignada</th>
                             <th>Notas del Administrador</th>
                         </tr>
                         </thead>
@@ -818,18 +819,24 @@
                                       th:text="${cita.vehiculo.marca + ' ' + cita.vehiculo.modelo}"></span>
                                 <span th:unless="${cita.vehiculo != null}" th:text="${cita.modelo}">N/A</span>
                             </td>
+                            <td th:text="${cita.sede ?: 'Sin sede'}"></td>
+                            <td th:text="${cita.trabajadorNombre ?: 'Por asignar'}"></td>
                             <td>
-                                <span th:text="${cita.colorVehiculo ?: 'N/A'}"></span>
+                                <span th:if="${cita.fechaCita != null}" th:text="${cita.fechaCita}"></span>
+                                <span th:unless="${cita.fechaCita != null}" 
+                                      th:text="${cita.fechaAsignada != null ? #temporals.format(cita.fechaAsignada, 'dd/MM/yyyy') : 'Por asignar'}"></span>
                             </td>
-                            <td th:text="${#temporals.format(cita.fechaCreacion, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td>
+                                <span th:if="${cita.horaCita != null && cita.horaFinCita != null}"
+                                      th:text="${cita.horaCita + ' - ' + cita.horaFinCita}"></span>
+                                <span th:unless="${cita.horaCita != null && cita.horaFinCita != null}"
+                                      th:text="${cita.fechaAsignada != null ? #temporals.format(cita.fechaAsignada, 'HH:mm') : '-'}"></span>
+                            </td>
                             <td>
                                 <span th:text="${cita.estado}"
                                       th:class="${cita.estado == 'Pendiente'} ? 'estado-pendiente' :
                                                 (${cita.estado == 'Aprobada'} ? 'estado-aprobada' : 'estado-rechazada')"></span>
                             </td>
-                            <td th:text="${cita.fechaAsignada != null} ?
-                                         ${#temporals.format(cita.fechaAsignada, 'dd/MM/yyyy HH:mm')} :
-                                         'Por asignar'"></td>
                             <td th:text="${cita.notasAdmin ?: 'No hay notas'}" class="notas-cell"></td>
                         </tr>
                         </tbody>

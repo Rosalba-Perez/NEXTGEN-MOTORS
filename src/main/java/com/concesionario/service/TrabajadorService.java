@@ -14,7 +14,7 @@ public class TrabajadorService {
     private final PasswordEncoder passwordEncoder;
 
     public TrabajadorService(TrabajadorRepository trabajadorRepository,
-                             PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder) {
         this.trabajadorRepository = trabajadorRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -28,9 +28,9 @@ public class TrabajadorService {
     }
 
     public void registrarTrabajador(String nombre, String apellido, String correo,
-                                    String identificacion, String password,
-                                    LocalTime horaInicio, LocalTime horaFin,
-                                    List<String> diasTrabajo) {
+            String identificacion, String password,
+            LocalTime horaInicio, LocalTime horaFin,
+            List<String> diasTrabajo, String sede) {
         Trabajador trabajador = new Trabajador();
         trabajador.setNombre(nombre);
         trabajador.setApellido(apellido);
@@ -40,6 +40,7 @@ public class TrabajadorService {
         trabajador.setHoraInicioTrabajo(horaInicio);
         trabajador.setHoraFinTrabajo(horaFin);
         trabajador.setDiasTrabajo(diasTrabajo);
+        trabajador.setSede(sede);
 
         trabajadorRepository.save(trabajador);
     }

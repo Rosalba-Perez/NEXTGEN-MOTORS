@@ -223,12 +223,12 @@
 
                             <div class="form-group">
                                 <label for="trabajador">Seleccione un trabajador:</label>
-                                <select id="trabajador" class="select2" th:field="*{trabajadorId}">
+                                <select id="trabajador" class="select2" th:field="*{trabajadorId}" required>
                                     <option value="">-- Seleccione un trabajador --</option>
                                     <option th:each="trabajador : ${trabajadores}" th:value="${trabajador.id}"
                                         th:data-dias="${trabajador.diasTrabajo}"
                                         th:data-horainicio="${trabajador.horaInicioTrabajo}"
-                                        th:data-horafin="${trabajador.horaFinTrabajo}"
+                                        th:data-horafin="${trabajador.horaFinTrabajo}" th:data-sede="${trabajador.sede}"
                                         th:text="${trabajador.nombre + ' ' + trabajador.apellido}">
                                     </option>
                                 </select>
@@ -243,23 +243,14 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                                <div class="form-group">
-                                    <label for="fechaCita">Fecha de la cita:</label>
-                                    <input type="date" id="fechaCita" th:field="*{fechaCita}" required>
-                                    <div id="fecha-error" style="display: none; color: red; margin-top: 5px;"></div>
-                                </div>
 
-                                <div class="form-group">
-                                    <label for="horaCita">Hora de la cita:</label>
-                                    <input type="time" id="horaCita" th:field="*{horaCita}" required>
-                                </div>
-                            </div>
 
                             <div class="form-group">
                                 <label for="sede">Sede:</label>
-                                <select id="sede" th:field="*{sede}" required>
-                                    <option value="">-- Selecciona una sede --</option>
+                                <select id="sede" th:field="*{sede}" required readonly
+                                    class="bg-gray-100 cursor-not-allowed" style="pointer-events: none;">
+                                    <option value="">-- Autocompletado del Asesor --</option>
+                                    <!-- Las opciones originales se mantienen para que funcione submit, se autoselecciona vía JS -->
                                     <option value="NexGen Motors Bocagrande">NexGen Motors Bocagrande</option>
                                     <option value="NexGen Motors La Boquilla">NexGen Motors La Boquilla</option>
                                     <option value="NexGen Motors El Laguito">NexGen Motors El Laguito</option>
@@ -373,7 +364,7 @@
             $('.select2').select2();
 
             // Configurar evento para el select de trabajador
-            document.getElementById('trabajador').addEventListener('change', function () {
+            $('#trabajador').on('change', function () {
                 const trabajadorSelect = document.getElementById('trabajador');
                 const selectedOption = trabajadorSelect.options[trabajadorSelect.selectedIndex];
 
@@ -381,58 +372,45 @@
                     const dias = selectedOption.getAttribute('data-dias');
                     const horaInicio = selectedOption.getAttribute('data-horainicio');
                     const horaFin = selectedOption.getAttribute('data-horafin');
+                    const sedeInput = selectedOption.getAttribute('data-sede');
 
                     // Mostrar información del horario
-                    document.getElementById('diasTrabajo').textContent = dias.replace(/[\[\]']+/g, '').replace(/,/g, ', ');
+                    document.getElementById('diasTrabajo').textContent = dias ? dias.replace(/[\[\]']+/g, '').replace(/,/g, ', ') : 'No definido';
                     document.getElementById('horarioTrabajo').textContent = `${horaInicio} - ${horaFin}`;
                     document.getElementById('horarioContainer').style.display = 'block';
 
-                    // Limpiar fecha al cambiar trabajador
-                    document.getElementById('fechaCita').value = '';
-                    document.getElementById('fecha-error').style.display = 'none';
+                    // Asignar sede y hacer que parezca de solo lectura
+                    const sedeSelect = document.getElementById('sede');
+                    if (sedeInput) {
+                        // Verifica si la opción existe, sino crea una nueva temporal
+                        let optionExists = Array.from(sedeSelect.options).some(opt => opt.value === sedeInput);
+                        if (!optionExists) {
+                            sedeSelect.add(new Option(sedeInput, sedeInput));
+                        }
+                        sedeSelect.value = sedeInput;
+                    } else {
+                        sedeSelect.value = "";
+                    }
                 } else {
                     document.getElementById('horarioContainer').style.display = 'none';
-                }
-            });
-
-            // Validar fecha al cambiar
-            document.getElementById('fechaCita').addEventListener('change', async function () {
-                const trabajadorId = document.getElementById('trabajador').value;
-                const fecha = this.value;
-                const errorDiv = document.getElementById('fecha-error');
-
-                if (!trabajadorId || !fecha) {
-                    errorDiv.style.display = 'none';
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`/usuario/check-dia-trabajador?trabajadorId=${trabajadorId}&fecha=${fecha}`);
-                    const data = await response.json();
-
-                    if (!data.valido) {
-                        errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${data.mensaje}<br>
-                                        <small>Días laborales: ${data.diasLaborales.join(', ')}</small>`;
-                        errorDiv.style.display = 'block';
-                        this.value = '';
-                    } else {
-                        errorDiv.style.display = 'none';
-                    }
-                } catch (error) {
-                    console.error("Error al validar fecha:", error);
+                    document.getElementById('sede').value = "";
                 }
             });
 
             // Validar antes de enviar el formulario
+
+
+            // Validar antes de enviar el formulario
             document.querySelector('.appointment-form').addEventListener('submit', function (e) {
                 const trabajadorId = document.getElementById('trabajador').value;
-                const fecha = document.getElementById('fechaCita').value;
-                const errorDiv = document.getElementById('fecha-error');
+                const errorDiv = document.getElementById('fecha-error') || document.createElement('div');
 
-                if (!trabajadorId || !fecha) {
+                if (!trabajadorId) {
                     e.preventDefault();
-                    errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Complete todos los campos`;
+                    errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Complete todos los campos, seleccione un trabajador.`;
                     errorDiv.style.display = 'block';
+                    errorDiv.style.color = 'red';
+                    document.getElementById('trabajador').parentNode.appendChild(errorDiv);
                     errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             });

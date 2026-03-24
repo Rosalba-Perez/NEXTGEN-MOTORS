@@ -30,6 +30,9 @@ public class Trabajador {
     private LocalTime horaFinTrabajo;
     private List<String> diasTrabajo; // ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"]
 
+    // Ubicación
+    private String sede;
+
     // Campos para recuperación de contraseña
     private String resetPasswordToken;
     private LocalDateTime resetPasswordTokenExpiry;
@@ -69,7 +72,7 @@ public class Trabajador {
     }
 
     public Trabajador(String nombre, String apellido, String identificacion, String correo,
-                      String password, String telefono, String direccion, String cargo) {
+            String password, String telefono, String direccion, String cargo) {
         this(nombre, apellido, identificacion, correo, password);
         this.telefono = telefono;
         this.direccion = direccion;
@@ -163,6 +166,15 @@ public class Trabajador {
 
     public void setDiasTrabajo(List<String> diasTrabajo) {
         this.diasTrabajo = diasTrabajo;
+        this.actualizarFechaModificacion();
+    }
+
+    public String getSede() {
+        return sede;
+    }
+
+    public void setSede(String sede) {
+        this.sede = sede;
         this.actualizarFechaModificacion();
     }
 
@@ -313,7 +325,8 @@ public class Trabajador {
     }
 
     public boolean tieneAlgunRol(Rol... roles) {
-        if (this.roles == null) return false;
+        if (this.roles == null)
+            return false;
         for (Rol rol : roles) {
             if (this.roles.contains(rol)) {
                 return true;
@@ -397,8 +410,10 @@ public class Trabajador {
     // Métodos equals y hashCode
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         Trabajador that = (Trabajador) o;
 
