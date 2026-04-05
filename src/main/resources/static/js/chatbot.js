@@ -101,15 +101,16 @@ document.addEventListener('DOMContentLoaded', function() {
             userInput.value = '';
             resetInactivityTimer();
 
-            // ✅ PRIMERO verificar si es búsqueda de vehículo
-            if (esBusquedaDeVehiculo(message)) {
-                // Usar el backend inteligente para vehículos
-                buscarVehiculosInteligente(message);
+            // 1. Intentar procesar como opción de menú fija (opcional)
+            // Si quieres que "vehiculos" o "cita" sigan abriendo los menús rápidos
+            const opcionesFijas = ['vehiculos', 'agendar', 'asesor', 'menu', 'hola'];
+
+            if (opcionesFijas.includes(message.toLowerCase())) {
+                processUserInput(message.toLowerCase());
             } else {
-                // Usar el sistema actual para otras cosas
-                setTimeout(() => {
-                    processUserInput(message.toLowerCase());
-                }, 500);
+                // 2. SI NO ES UNA OPCIÓN FIJA, QUE RESPONDA LA IA SIEMPRE
+                // Ya no filtramos por "esBusquedaDeVehiculo", dejamos que la IA piense
+                buscarVehiculosInteligente(message);
             }
         }
     }
