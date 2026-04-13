@@ -102,17 +102,44 @@ document.addEventListener('DOMContentLoaded', function() {
             resetInactivityTimer();
 
             // 1. Intentar procesar como opción de menú fija (opcional)
-            // Si quieres que "vehiculos" o "cita" sigan abriendo los menús rápidos
             const opcionesFijas = ['vehiculos', 'agendar', 'asesor', 'menu', 'hola'];
 
             if (opcionesFijas.includes(message.toLowerCase())) {
                 processUserInput(message.toLowerCase());
+            } else if (esPreguntaPredeterminada(message)) {
+                // Ya se procesó la respuesta de forma local sin usar cuota de IA
             } else {
                 // 2. SI NO ES UNA OPCIÓN FIJA, QUE RESPONDA LA IA SIEMPRE
-                // Ya no filtramos por "esBusquedaDeVehiculo", dejamos que la IA piense
                 buscarVehiculosInteligente(message);
             }
         }
+    }
+
+    function esPreguntaPredeterminada(mensaje) {
+        const msg = mensaje.toLowerCase().trim();
+        
+        if (msg.includes('quien eres') || msg.includes('quién eres') || msg.includes('cómo te llamas') || msg.includes('como te llamas')) {
+            addBotMessage('Soy Dante, el asesor y asistente virtual de NextGen Motors. Mi objetivo es ayudarte a encontrar el vehículo ideal, resolver dudas y agendar tus citas. ¿En qué te puedo asesorar hoy?', [
+                { text: 'Ir al Inicio', value: 'menu' }
+            ]);
+            return true;
+        }
+
+        if (msg === 'gracias' || msg === 'muchas gracias' || msg === 'ok gracias') {
+            addBotMessage('¡De nada! Recuerda que estoy aquí 24/7 para ayudarte con tus consultas automotrices. ¿Deseas explorar algo más?', [
+                { text: 'Vehículos disponibles', value: 'vehiculos' },
+                { text: 'Terminar chat', value: 'salir' }
+            ]);
+            return true;
+        }
+
+        if (msg === 'adios' || msg === 'adiós' || msg === 'chao' || msg === 'hasta luego') {
+            addBotMessage('¡Hasta pronto! Vuelve cuando quieras a NextGen Motors.');
+            resetChat();
+            return true;
+        }
+        
+        return false;
     }
 
     function esBusquedaDeVehiculo(mensaje) {
@@ -169,12 +196,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ mensaje: mensaje })
             });
 
-            if (!response.ok) throw new Error('Error en la respuesta');
-
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (e) {
+                data = null;
+            }
 
             // Remover typing
             typingDiv.remove();
+
+            if (!response.ok) {
+                if (data && data.respuesta) {
+                    addBotMessage(data.respuesta);
+                } else {
+                    addBotMessage('Lo siento, en este momento mis servidores están saturados. Por favor intenta de nuevo en un minuto.');
+                }
+                return;
+            }
 
             // Mostrar respuesta del bot
             addBotMessage(data.respuesta);
@@ -186,9 +225,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error('Error:', error);
-            typingDiv.remove();
-            // Si falla, usar el sistema normal
-            processUserInput(mensaje.toLowerCase());
+            if (document.body.contains(typingDiv)) typingDiv.remove();
+            
+            // Si hay un error grave de red, usar el sistema normal de reserva
+            addBotMessage('Ha ocurrido un error de conexión, pero aún puedo ayudarte con estas opciones:');
+            processUserInput('menu');
         }
     }
 
@@ -262,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (input === 'hola' || input === 'hi' || input === 'buenos días') {
             showMainMenu();
         }
-        else if (input.includes('vehículo') || input === 'vehiculos' || input === '1') {
+        else if (input.includes('vehículo') || input.includes('vehiculo') || input === 'vehiculos' || input === '1') {
             showVehicleCategories();
         }
         else if (input.includes('agendar') || input.includes('cita') || input === '2') {
@@ -287,13 +328,16 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = '/usuario/cita?tipo=Otros';
         }
         else if (input === 'pick-ups' || input === 'pick ups') {
-            window.location.href = '/vehiculos#categoria-pick-ups';
+            redireccionarCategoria('#categoria-pick-ups');
         }
-        else if (input === 'camionetas') {
-            window.location.href = '/vehiculos#categoria-camionetas';
+        else if (input === 'híbridos') {
+            redireccionarCategoria('#categoria-hibridos');
+        }
+        else if (input === 'performance') {
+            redireccionarCategoria('#categoria-performance');
         }
         else if (input === 'automóviles' || input === 'automoviles') {
-            window.location.href = '/vehiculos#categoria-automóviles';
+            redireccionarCategoria('#categoria-automoviles');
         }
         else if (input === 'llamar') {
             addBotMessage('Puedes llamar al concesionario al número: <a href="tel:3054424835" style="color: #0066cc; text-decoration: underline;">305-442-4835</a>');
@@ -315,10 +359,26 @@ document.addEventListener('DOMContentLoaded', function() {
         resetInactivityTimer();
     }
 
+    function redireccionarCategoria(hash) {
+        if (window.location.pathname === '/vehiculos') {
+            const id = hash.substring(1);
+            const elemento = document.getElementById(id);
+            if (elemento) {
+                window.history.pushState(null, null, hash);
+                elemento.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                window.location.href = '/vehiculos' + hash;
+            }
+        } else {
+            window.location.href = '/vehiculos' + hash;
+        }
+    }
+
     function showVehicleCategories() {
         addBotMessage('Tenemos estas categorías de vehículos:', [
             { text: 'Pick-Ups', value: 'pick-ups' },
-            { text: 'Camionetas', value: 'camionetas' },
+            { text: 'Performance', value: 'performance' },
+            { text: 'Híbridos', value: 'híbridos' },
             { text: 'Automóviles', value: 'automóviles' },
             { text: 'Volver al menú', value: 'menu' }
         ]);

@@ -120,7 +120,7 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-bold tracking-tight text-center text-gray-900 dark:text-white sm:text-4xl">Explora Nuestra Gama</h2>
 
-            <div th:each="categoria : ${categorias}" class="category-section mt-12" th:id="${'categoria-' + categoria.replace(' ', '-').toLowerCase()}">
+            <div th:each="categoria : ${categorias}" class="category-section mt-12 scroll-mt-24" th:id="${'categoria-' + categoria.toLowerCase().replace(' ', '-').replace('í', 'i').replace('ó', 'o')}">
                 <h3 class="category-title text-2xl font-bold text-gray-900 dark:text-white mb-8 pb-4 border-b border-gray-200 dark:border-gray-700" th:text="${categoria}"></h3>
                 <div class="vehicle-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div th:each="vehiculo : ${vehiculosPorCategoria.get(categoria)}" class="vehicle-card rounded-xl border border-gray-200 dark:border-gray-700 bg-background-light dark:bg-background-dark overflow-hidden hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50 transition-all">

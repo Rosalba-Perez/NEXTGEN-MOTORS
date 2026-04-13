@@ -10,4 +10,7 @@ public interface VehiculoRepository extends MongoRepository<Vehiculo, String> {
     List<Vehiculo> findByDestacadoFalse();
     long countByDestacadoFalse();
     long countByDestacadoTrue();
+
+    @org.springframework.data.mongodb.repository.Query("{ $or: [ { 'marca': { $regex: ?0, $options: 'i' } }, { 'modelo': { $regex: ?0, $options: 'i' } }, { 'categoria': { $regex: ?0, $options: 'i' } }, { 'descripcion': { $regex: ?0, $options: 'i' } } ] }")
+    List<Vehiculo> findByFiltroRegex(String regex);
 }
