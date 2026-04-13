@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function resetChat() {
         chatMessages.innerHTML = '';
         sessionStorage.removeItem('chatHistory');
+        sessionStorage.removeItem('chatMessagesArray'); // Limpiar el array de historial
         addBotMessage('¡Hola! Bienvenido al concesionario . ¿En qué puedo ayudarte hoy?', [
             { text: 'Vehículos disponibles', value: 'vehiculos' },
             { text: 'Agendar cita', value: 'agendar' },
@@ -188,12 +189,19 @@ document.addEventListener('DOMContentLoaded', function() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
         try {
+            // Obtener historial de mensajes (últimos 6 para no saturar)
+            const historial = JSON.parse(sessionStorage.getItem('chatMessagesArray') || '[]');
+            const ultimosMensajes = historial.slice(-6);
+
             const response = await fetch('/api/chatbot/mensaje', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ mensaje: mensaje })
+                body: JSON.stringify({ 
+                    mensaje: mensaje,
+                    historial: ultimosMensajes
+                })
             });
 
             let data;
@@ -427,6 +435,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         chatMessages.appendChild(container);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Guardar para memoria de la IA
+        const historial = JSON.parse(sessionStorage.getItem('chatMessagesArray') || '[]');
+        historial.push({ role: 'user', content: text });
+        sessionStorage.setItem('chatMessagesArray', JSON.stringify(historial));
+
         saveChatHistory();
     }
 
@@ -465,6 +479,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         chatMessages.appendChild(container);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Guardar para memoria de la IA
+        const historial = JSON.parse(sessionStorage.getItem('chatMessagesArray') || '[]');
+        historial.push({ role: 'assistant', content: text.replace(/<[^>]*>?/gm, '') });
+        sessionStorage.setItem('chatMessagesArray', JSON.stringify(historial));
+
         saveChatHistory();
     }
 

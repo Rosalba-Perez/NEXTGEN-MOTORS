@@ -4,6 +4,10 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import java.util.ArrayList;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 import com.concesionario.repository.VehiculoRepository;
 import com.concesionario.model.Vehiculo;
@@ -28,54 +32,69 @@ public class ChatbotService {
     // Récord auxiliar para puntuar los vehículos
     private record VehiculoScore(Vehiculo vehiculo, int score) {}
 
-    public String analizarYResponder(String mensajeUsuario) {
-        // 1. Extraer palabras clave (más de 2 letras) del mensaje para filtrar contextualmente
-        List<String> palabrasClave = Arrays.stream(mensajeUsuario.toLowerCase().replaceAll("[^a-záéíóúñ0-9\\s]", "").split("\\s+"))
+    public String analizarYResponder(String mensajeUsuario, List<Map<String, String>> historial) {
+        String mensajeMin = mensajeUsuario.toLowerCase();
+        
+        // 1. Extraer palabras clave y expandirlas contextualmente
+        List<String> palabrasOriginales = Arrays.stream(mensajeMin.replaceAll("[^a-záéíóúñ0-9\\s]", "").split("\\s+"))
                                            .filter(p -> p.length() > 2)
                                            .toList();
+        
+        // Expansión de términos para búsqueda contextual
+        StringBuilder regexBuilder = new StringBuilder();
+        for (String p : palabrasOriginales) {
+            if (regexBuilder.length() > 0) regexBuilder.append("|");
+            regexBuilder.append(p);
+            
+            // Sinónimos y conceptos relacionados mejorados (fuzzy context)
+            if (p.startsWith("rapid") || p.startsWith("veloz") || p.contains("velocidad")) {
+                regexBuilder.append("|potencia|aceleración|rendimiento|0-100|pista|deportivo|performance|rápido|rapido");
+            } else if (p.contains("viaja") || p.contains("carretera") || p.contains("pasear")) {
+                regexBuilder.append("|comodidad|confort|premium|autovía|distancia|largo|crucero|viajar|viaje");
+            } else if (p.contains("familia") || p.contains("hijo") || p.contains("niño")) {
+                regexBuilder.append("|espacio|seguridad|pasajeros|asientos|amplio|familiar");
+            } else if (p.contains("campo") || p.contains("finca") || p.contains("offroad") || p.contains("todoterreno") || p.contains("montaña")) {
+                regexBuilder.append("|4x4|tracción|terreno|robusto|aventura|suspensión|todoterreno|barro");
+            } else if (p.contains("automati") || p.contains("automatic")) {
+                regexBuilder.append("|automática|automatica|transmisión|caja");
+            }
+        }
                                            
         List<Vehiculo> vehiculosFiltrados;
-        if (!palabrasClave.isEmpty()) {
-            // Unir las palabras con OR lógico (|) para la expresión regular
-            String regex = String.join("|", palabrasClave);
-            vehiculosFiltrados = vehiculoRepository.findByFiltroRegex(regex);
+        if (regexBuilder.length() > 0) {
+            vehiculosFiltrados = vehiculoRepository.findByFiltroRegex(regexBuilder.toString());
         } else {
             vehiculosFiltrados = vehiculoRepository.findByDestacadoTrue();
         }
 
-        // Si no se encontraron resultados o la DB estaba vacía, usamos los destacados como fallback
         if (vehiculosFiltrados == null || vehiculosFiltrados.isEmpty()) {
             vehiculosFiltrados = vehiculoRepository.findByDestacadoTrue();
         }
                                            
-        // 2. Calcular puntaje solo para los vehículos filtrados desde la base de datos
+        // 2. Calcular puntaje con pesos contextuales
         List<Vehiculo> mejoresOpciones = vehiculosFiltrados.stream()
             .map(v -> {
                 int score = 0;
-                String descripcion = v.getDescripcion() != null ? v.getDescripcion().toLowerCase() : "";
-                String marca = v.getMarca() != null ? v.getMarca().toLowerCase() : "";
-                String modelo = v.getModelo() != null ? v.getModelo().toLowerCase() : "";
-                String categoria = v.getCategoria() != null ? v.getCategoria().toLowerCase() : "";
+                String desc = (v.getDescripcion() != null ? v.getDescripcion() : "").toLowerCase();
+                String marc = (v.getMarca() != null ? v.getMarca() : "").toLowerCase();
+                String mod = (v.getModelo() != null ? v.getModelo() : "").toLowerCase();
+                String cat = (v.getCategoria() != null ? v.getCategoria() : "").toLowerCase();
                 
-                for (String palabra : palabrasClave) {
-                    if (marca.contains(palabra) || modelo.contains(palabra)) {
-                        score += 5; // Alta relevancia (Mencionó la marca o el modelo)
-                    } else if (categoria.contains(palabra)) {
-                        score += 3; // Media relevancia (Mencionó "SUV", "Camioneta", etc)
-                    } else if (descripcion.contains(palabra)) {
-                        score += 1; // Contexto en descripción (Familiar, campo, rápido, etc)
+                String[] terminosBusqueda = regexBuilder.toString().split("\\|");
+                for (String t : terminosBusqueda) {
+                    if (marc.contains(t) || mod.contains(t)) {
+                        score += 5;
+                    } else if (cat.contains(t)) {
+                        score += 3;
+                    } else if (desc.contains(t)) {
+                        score += 4;
                     }
                 }
                 
-                // Si el mensaje no coincide o no hay keywords claras, dar ventaja a los destacados
-                if (score == 0) {
-                     score = v.isDestacado() ? 1 : 0; 
-                }
+                if (score == 0 && v.isDestacado()) score = 1;
                 return new VehiculoScore(v, score);
             })
-            // Ordenar de mayor a menor puntaje
             .sorted(Comparator.comparingInt(VehiculoScore::score).reversed())
-            // Tomar ÚNICAMENTE las 3 o 4 mejores opciones para no saturar los tokens
             .limit(4)
             .map(VehiculoScore::vehiculo)
             .toList();
@@ -90,24 +109,39 @@ public class ChatbotService {
                       .append("\n\n");
         }
 
-        var systemMessage = new SystemMessage("""
+        // 4. Preparar lista de mensajes con HISTORIAL
+        List<Message> mensajes = new ArrayList<>();
+        mensajes.add(new SystemMessage("""
             Eres Dante, el asesor experto y asistente virtual de la concesionaria 'NextGen Motors'. 
             Tu meta es ser útil, persuasivo y amable.
-            Si un usuario te pregunta quién eres, debes presentarte claramente diciendo que eres Dante, un asistente virtual enfocado en el apoyo de los usuarios para facilitar su traslado, movilidad y ayudarles a encontrar el vehículo ideal.
-            MUY IMPORTANTE: Solo debes responder a preguntas relacionadas con nuestra concesionaria, nuestros vehículos, ventas, financiamiento, repuestos y servicios automotrices.
             
-            El sistema ha filtrado estas opciones preliminares basándose en lo que pide el usuario:
+            REGLA DE ORO DE MEMORIA: Tienes acceso a la conversación previa. No te presentes de nuevo si ya lo hiciste. Si el usuario hace una pregunta de seguimiento ("¿cuál es ese?", "¿cuánto cuesta ese?"), responde refiriéndote al último vehículo mencionado.
+            
+            REGLA DE ORO DE RESPUESTA:
+            1. SIEMPRE debes mencionar explícitamente la MARCA y el MODELO del vehículo que recomiendas.
+            2. SIEMPRE debes incluir el ID con el formato [[ID: id_del_vehiculo]] pegado al nombre.
+            3. Tus respuestas DEBEN SER BREVES (máximo 3 oraciones).
+            
+            Ejemplo correcto: "Te recomiendo el Mercedes AMG GT [[ID: 64bf21...]] porque tiene un rendimiento excepcional en carretera."
+            
+            Vehículos disponibles actualmente para este contexto:
             """ + inventario.toString() + """
-            
-            Basado EN LA DESCRIPCIÓN de estos vehículos que te pasé, piensa cuál es la mejor opción para el contexto del usuario, explícale de forma conversacional por qué, y recomiéndale el que mejor se adapte (puedes recomendar 1 o 2).
-            INSTRUCCIÓN MUY IMPORTANTE: Tus respuestas DEBEN SER MUY BREVES, DIRECTAS Y CONCISAS. NUNCA excedas de 2 o 3 oraciones cortas por recomendación. NO uses lenguaje poético o excesivamente largo, ve al grano rápidamente.
-            REGLA CRÍTICA: Cada vez que menciones un vehículo en tu respuesta, DEBES incluir su ID explícitamente en tu texto usando el formato exacto: [[ID: id_del_vehiculo]].
-            Por ejemplo: "Te recomiendo el Toyota Land Cruiser [[ID: 64bf21...]] porque tiene gran espacio y tracción perfecta."
-            """);
+            """));
 
-        var userMessage = new UserMessage(mensajeUsuario);
-        Prompt prompt = new Prompt(List.of(systemMessage, userMessage));
+        // Añadir historial al contexto
+        if (historial != null) {
+            for (Map<String, String> msg : historial) {
+                if ("user".equals(msg.get("role"))) {
+                    mensajes.add(new UserMessage(msg.get("content")));
+                } else {
+                    mensajes.add(new AssistantMessage(msg.get("content")));
+                }
+            }
+        }
 
-        return chatModel.call(prompt).getResult().getOutput().getText();
+        // Añadir mensaje actual
+        mensajes.add(new UserMessage(mensajeUsuario));
+
+        return chatModel.call(new Prompt(mensajes)).getResult().getOutput().getText();
     }
 }

@@ -25,11 +25,12 @@ public class ChatbotRestController {
     private VehiculoRepository vehiculoRepository;
 
     @PostMapping("/mensaje")
-    public ResponseEntity<?> recibirMensaje(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> recibirMensaje(@RequestBody Map<String, Object> request) {
         try {
-            String mensaje = request.get("mensaje");
+            String mensaje = (String) request.get("mensaje");
+            List<Map<String, String>> historial = (List<Map<String, String>>) request.get("historial");
 
-            String respuestaIA = chatbotService.analizarYResponder(mensaje);
+            String respuestaIA = chatbotService.analizarYResponder(mensaje, historial);
             
             List<Vehiculo> recomendados = new ArrayList<>();
             
