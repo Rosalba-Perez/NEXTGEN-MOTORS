@@ -9,8 +9,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Configuración para compatibilidad con Groq.
- * Elimina el campo 'extra_body' que Spring AI 1.1+ envía automáticamente
- * y que Groq rechaza con un Error 400.
+
  */
 @Configuration
 public class GroqConfig {

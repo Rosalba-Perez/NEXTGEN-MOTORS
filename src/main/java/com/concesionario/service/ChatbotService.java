@@ -14,6 +14,7 @@ import com.concesionario.model.Vehiculo;
 import java.util.List;
 import java.util.Comparator;
 import java.util.Arrays;
+import java.text.Normalizer;
 
 /**
  * Servicio de Chatbot impulsado por Groq (vía OpenAI compatibility layer)
@@ -31,6 +32,13 @@ public class ChatbotService {
     
     // Récord auxiliar para puntuar los vehículos
     private record VehiculoScore(Vehiculo vehiculo, int score) {}
+
+    // Elimina tildes/acentos para comparación flexible
+    private String normalizarTexto(String texto) {
+        if (texto == null) return "";
+        return Normalizer.normalize(texto.toLowerCase(), Normalizer.Form.NFD)
+                         .replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+    }
 
     public String analizarYResponder(String mensajeUsuario, List<Map<String, String>> historial) {
         String mensajeMin = mensajeUsuario.toLowerCase();
@@ -75,21 +83,27 @@ public class ChatbotService {
         List<Vehiculo> mejoresOpciones = vehiculosFiltrados.stream()
             .map(v -> {
                 int score = 0;
-                String desc = (v.getDescripcion() != null ? v.getDescripcion() : "").toLowerCase();
-                String marc = (v.getMarca() != null ? v.getMarca() : "").toLowerCase();
-                String mod = (v.getModelo() != null ? v.getModelo() : "").toLowerCase();
-                String cat = (v.getCategoria() != null ? v.getCategoria() : "").toLowerCase();
+                String desc = normalizarTexto(v.getDescripcion());
+                String marc = normalizarTexto(v.getMarca());
+                String mod  = normalizarTexto(v.getModelo());
+                // Normalizar categoría para ignorar tildes ("Híbridos" → "hibridos")
+                String cat  = normalizarTexto(v.getCategoria());
+                // Normalizar también el término de búsqueda al comparar
+                String mensajeNorm = normalizarTexto(mensajeUsuario);
                 
                 String[] terminosBusqueda = regexBuilder.toString().split("\\|");
                 for (String t : terminosBusqueda) {
-                    if (marc.contains(t) || mod.contains(t)) {
+                    String tNorm = normalizarTexto(t);
+                    if (marc.contains(tNorm) || mod.contains(tNorm)) {
                         score += 5;
-                    } else if (cat.contains(t)) {
+                    } else if (cat.contains(tNorm)) {
                         score += 3;
-                    } else if (desc.contains(t)) {
+                    } else if (desc.contains(tNorm)) {
                         score += 4;
                     }
                 }
+                // Bonus si la categoría aparece literalmente en el mensaje (sin tilde)
+                if (!cat.isEmpty() && mensajeNorm.contains(cat)) score += 4;
                 
                 if (score == 0 && v.isDestacado()) score = 1;
                 return new VehiculoScore(v, score);
@@ -115,14 +129,19 @@ public class ChatbotService {
             Eres Dante, el asesor experto y asistente virtual de la concesionaria 'NextGen Motors'. 
             Tu meta es ser útil, persuasivo y amable.
             
-            REGLA DE ORO DE MEMORIA: Tienes acceso a la conversación previa. No te presentes de nuevo si ya lo hiciste. Si el usuario hace una pregunta de seguimiento ("¿cuál es ese?", "¿cuánto cuesta ese?"), responde refiriéndote al último vehículo mencionado.
+            REGLA DE ORO DE MEMORIA: Tienes acceso a la conversación previa. No te presentes de nuevo si ya lo hiciste.
+             Si el usuario hace una pregunta de seguimiento ("¿cuál es ese?", "¿cuánto cuesta ese?"), responde refiriéndote al último vehículo mencionado.
             
             REGLA DE ORO DE RESPUESTA:
             1. SIEMPRE debes mencionar explícitamente la MARCA y el MODELO del vehículo que recomiendas.
             2. SIEMPRE debes incluir el ID con el formato [[ID: id_del_vehiculo]] pegado al nombre.
             3. Tus respuestas DEBEN SER BREVES (máximo 3 oraciones).
+            4. RESTRICCIÓN DE ALCANCE ABSOLUTA E INQUEBRANTABLE: Tu único propósito es asistir en temas de 'NextGen Motors', vehículos, movilidad y compra de autos. 
+            Si el usuario pregunta CUALQUIER COSA fuera de este dominio (política, historia, geografía, personas públicas, cultura general, etc.), debes responder ÚNICA Y EXCLUSIVAMENTE con esta frase, 
+            sin agregar nada más: "No está en mis funcionalidades responder a eso". NUNCA menciones vehículos en ese caso.
             
-            Ejemplo correcto: "Te recomiendo el Mercedes AMG GT [[ID: 64bf21...]] porque tiene un rendimiento excepcional en carretera."
+            
+            Ejemplo correcto de recomendación: "Te recomiendo el Mercedes AMG GT [[ID: 64bf21...]] porque tiene un rendimiento excepcional en carretera."
             
             Vehículos disponibles actualmente para este contexto:
             """ + inventario.toString() + """
