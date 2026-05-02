@@ -75,7 +75,7 @@
         <dependency>
             <groupId>org.thymeleaf.extras</groupId>
             <artifactId>thymeleaf-extras-springsecurity6</artifactId>
-            <version>3.1.2.RELEASE</version>
+            <version>3.1.5.RELEASE</version>
         </dependency>
 
         <!-- Email -->
@@ -132,6 +132,13 @@
             <artifactId>javafaker</artifactId>
             <version>1.0.2</version>
         </dependency>
+
+        <dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>spring-dotenv</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+
     </dependencies>
 
     <!-- 🔧 AJUSTES DE BUILD -->
