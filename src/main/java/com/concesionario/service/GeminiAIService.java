@@ -14,7 +14,7 @@ public class GeminiAIService {
 
     private final WebClient webClient;
 
-    @Value("${gemini.api.key}")
+    @Value("${gemini.api.key:}")
     private String apiKey;
 
     private static final String GEMINI_API_URL =

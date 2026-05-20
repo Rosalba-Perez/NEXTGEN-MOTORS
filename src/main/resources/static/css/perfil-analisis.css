@@ -512,7 +512,7 @@ tbody tr:hover {
 
 /* ===== MENÚ HAMBURGUESA MÓVIL ===== */
 @media (max-width: 1024px) {
-     #sidebar {
+    #sidebar {
         display: none !important;
     }
     .main-content {
@@ -699,7 +699,24 @@ tbody tr:hover {
     visibility: visible;
 }
 
-.modal-content {
+.modal .modal-content {
+    background-color: white;
+    margin: 2% auto;
+    padding: 2rem;
+    border-radius: 1rem;
+    width: 92%;
+    max-width: 860px;
+    max-height: 92vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.dark .modal .modal-content {
+    background-color: #1e293b;
+    color: #e2e8f0;
+}
+
+.modal-overlay .modal-content {
     background: white;
     border-radius: 1rem;
     padding: 2rem;
@@ -710,7 +727,7 @@ tbody tr:hover {
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-.dark .modal-content {
+.dark .modal-overlay .modal-content {
     background: #1e293b;
     color: #e2e8f0;
 }
@@ -718,6 +735,37 @@ tbody tr:hover {
 .modal-overlay.active .modal-content {
     transform: scale(1);
 }
+
+/* Grid del formulario */
+.modal .modal-content .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.modal .modal-content .col-span-2 {
+    grid-column: span 2;
+}
+
+/* Responsive modal */
+@media (max-width: 768px) {
+    .modal .modal-content {
+        margin: 0 auto;
+        width: 98%;
+        max-height: 98vh;
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+    }
+
+    .modal .modal-content .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal .modal-content .col-span-2 {
+        grid-column: span 1;
+    }
+}
+
 
 .modal-icon {
     display: flex;
